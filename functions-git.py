@@ -53,7 +53,7 @@ def adjustIntervals(indexlist):
         Takes in a list of monthly arrays (['index_yyyymm',array]) 
         Outputs a list of overlapping bimonthly arrays
             Simply averages each overlapping two month pair within each year. You have to do 
-            this by year because Dec - Jan is not an interval, it starts over. This uses the 
+            this by year because Dec - Jan is not an interval, it starts over. This uses 
             bilinear resampling.
     '''
     # This is for the plot titles later
