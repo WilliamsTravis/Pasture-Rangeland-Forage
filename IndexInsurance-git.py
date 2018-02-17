@@ -2,12 +2,10 @@
 """
 Created on Fri Nov 17 22:19:03 2017
 
-We need the premium and base rates for each cell for each interval and each guarantee
-    level, as well as an index that is resampled to the require .25 degree cell 
-    size and averaged for overlapping two month periods. 
+This script allows you to change parameters and call the functions. The working directory is set in the functions script while this is being tinkered with. 
     
     
-*** Check Rain-index outputs against this sites numbers (Baseline year must extend back to 1948)
+*** To check rain-index outputs for accuracy set the baseline years from 1948 to 2016 and check the matching outputs from this site:
     
     https://prodwebnlb.rma.usda.gov/apps/prf#
     
