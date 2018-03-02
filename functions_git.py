@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt, mpld3
 import matplotlib.image as mpimg
 import matplotlib.gridspec as gridspec
 from matplotlib import style
-matplotlib.use('Qt5Agg')
+#matplotlib.use('Qt5Agg')
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
@@ -496,7 +496,7 @@ def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, 
     
     ################### Plot everything  ######################################
     # Main Title
-    fig = plt.figure()
+    fig = plt.figure(figsize=(35, 20))
     if startyear == endyear:
         endyear = ""
     else:
@@ -687,7 +687,9 @@ def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, 
         point = ax.plot(int(spot[1]),int(spot[0]),pointtype, markersize=6,markeredgewidth=1, markeredgecolor='k')#, edgecolor='black',linewidth='1'
         
         # Draw it all
-        fig.canvas.draw()
+        #cfm = fig.get_current_fig_manager()
+        #cfm.frame.Maximize(True)
+        #fig.canvas.draw()
         
         return coords
     global cid
