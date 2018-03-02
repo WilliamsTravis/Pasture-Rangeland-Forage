@@ -11,7 +11,7 @@ import datetime
 from datetime import timedelta
 from itertools import chain
 import matplotlib
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt, mpld3
 import matplotlib.image as mpimg
 import matplotlib.gridspec as gridspec
 from matplotlib import style
