@@ -24,12 +24,6 @@ import inspect
 from osgeo import ogr, osr
 from tqdm import *
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from selenium import webdriver
-from selenium.webdriver.support.ui import Select, WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException
 
 def PrintException():
     exc_type, exc_obj, tb = sys.exc_info()
@@ -42,8 +36,6 @@ def PrintException():
 
 gdal.UseExceptions()
 print("GDAL version:" + str(int(gdal.VersionInfo('VERSION_NUM'))))
-#os.chdir('f:\\data\\droughtindices\\')
-os.chdir('C:\\Users\\Travis\\GitHub\\Pasture-Rangeland-Forage\\')
 
 ###########################################################################
 ############## Function to readjust index intervals #######################
@@ -604,7 +596,7 @@ def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, 
     #         Colors:   'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'
     
         # Catch the target grid cell
-        targetid  = grid[round(iy),round(ix)]
+        targetid  = grid[round(float(iy)),round(float(ix))]
         index = np.where(grid == targetid)
 
         # Create the time series of data at that gridcell
@@ -689,7 +681,7 @@ def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, 
         # Draw it all
         #cfm = fig.get_current_fig_manager()
         #cfm.frame.Maximize(True)
-        #fig.canvas.draw()
+        fig.canvas.draw()
         
         return coords
     global cid

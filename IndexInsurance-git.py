@@ -11,9 +11,11 @@ This script allows you to change parameters and call the functions. The working 
     
 @author: Travis
 """
-runfile('C:/Users/Travis/GitHub/Pasture-Rangeland-Forage/functions-git.py', wdir='C:/Users/Travis/GitHub/Pasture-Rangeland-Forage')
+runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py', wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage')
 import warnings
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore") #This is temporary, toggle this on for presentation
+os.chdir(r'C:\Users\trwi0358\Github\Pasture-Rangeland-Forage')
+filedir = 'd:\\data\\droughtindices\\'
 
 ############################ Normal NOAA Method ###############################
 #rasterpath = "e:\\data\\droughtindices\\noaa\\nad83\\raw"
@@ -25,7 +27,7 @@ warnings.filterwarnings("ignore")
 
 ####################### Test methods for drought indices ######################
 #rasterpath = r'e:\data\droughtindices\palmer\pdsi\nad83'
-rasterpath = r'e:\data\droughtindices\spei\nad83\6month'
+rasterpath = filedir+'spei\\nad83\\6month'
 #rasterpath = r'E:\data\droughtindices\grace\nad83\rz\monthly\quarteres'
 method = 2 # method 2 set strike levels based on matching probability of occurrence with the RMA index
 adjustit = True
@@ -46,8 +48,8 @@ difference = 0 # 0 = indemnities, 1 = net payouts, 2 = lossratios
 
 
 #################### Function Call #################################################################
-[insurance_package_all, insurance_package_average, index_package_all,index_package,cid,coords] = indexInsurance(rasterpath, actuarialyear, startyear,endyear, baselineyear,baselinendyear, productivity, strike, acres, allocation, adjustit = adjustit,standardizeit = standardizeit, indexit = indexit, method = method, difference = difference) 
-
+[insurance_package_all, insurance_package_average, index_package_all,index_package,cid,coords] = indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, baselinendyear, productivity, strike, acres, allocation, adjustit = adjustit,standardizeit = standardizeit, indexit = indexit, method = method, difference = difference) 
+                                                                                                               # rasterpath, actuarialyear, startyear, endyear, baselineyear, baselinendyear, productivity, strike, acres, allocation, adjustit, standardizeit, indexit = True, method = 1, difference = 0
 # Return order:
 #insurance_package_all = [producerpremiums,indemnities]
 #insurance_package_average = [meanppremium,meanindemnity]
