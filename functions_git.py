@@ -24,6 +24,11 @@ import inspect
 from osgeo import ogr, osr
 from tqdm import *
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import plotly.plotly as py
+import plotly.tools as tls
+from plotly import tools
+import plotly.graph_objs as go
+
 
 def PrintException():
     exc_type, exc_obj, tb = sys.exc_info()
@@ -164,7 +169,7 @@ def indexHist(array,guarantee = 1,mostfreq = 'n',binumber = 100, limmax = 0, sl 
 ###########################################################################
 ############## Mondo, Super Important Main Function ########################
 ###########################################################################    
-def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, baselinendyear,  productivity, strike, acres, allocation, adjustit, standardizeit, indexit = True, method = 1, difference = 0):
+def indexInsurance(rasterpath, actuarialyear, studyears, baselineyears,  productivity, strike, acres, allocation, adjustit, standardizeit, indexit = True, method = 1, difference = 0):
     """
     **** UNDER CONSTRUCTION AND OPEN TO SUGGESTION ****
 
@@ -264,6 +269,12 @@ def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, 
     ###########################################################################
     ############## Getting all the numbers ####################################
     ###########################################################################    
+    # Extract the years
+    startyear = int(studyears[0])
+    endyear = int(studyears[1])
+    baselineyear = int(baselineyears[0])
+    baselinendyear = int(baselineyears[1])
+    
     # Read in the mask to display only the Contiguous United States
     mask = readRaster('data\\masks\\nad83\\mask4.tif',1,-9999.)[0]
         
@@ -458,7 +469,7 @@ def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, 
         series1 = indemnities
         ylimit = 5000
         title = "Potential Payouts"
-        title2 = "Average: " + str(round(np.nanmean(meanindemnity),2))
+        title2 = "Average: $" + str(round(np.nanmean(meanindemnity),2))
         label = 'Potential Payouts USD ($)'
     elif difference == 1:
         mainmap = net
@@ -487,213 +498,213 @@ def indexInsurance(rasterpath, actuarialyear, startyear, endyear, baselineyear, 
         #    plt.show()   
     
     ################### Plot everything  ######################################
-    try:
-    # Main Title
-        fig = plt.figure(figsize=(35, 20))
-        if startyear == endyear:
-            endyear = ""
-        else:
-            endyear = ' - '+str(endyear)
-        fig.suptitle('PRF with '+indexname+": "+str(startyear)+endyear+'\nBaseline year: '+str(baselineyear)+'; Strike Level: %'+ str(int(strike*100))+'; Rate Year: '+str(actuarialyear), fontsize=12,fontweight = 'bold')
-             
-        # Establish subplot structure
-        ax1 = plt.subplot2grid((3, 4), (0, 0), colspan = 2)
-        ax2 = plt.subplot2grid((3, 4), (0, 2), colspan = 2)  
-        ax3 = plt.subplot2grid((3, 4), (1, 0), colspan = 3,rowspan = 2)    
-        ax4 = plt.subplot2grid((3, 4), (1, 3), colspan = 1,rowspan = 2) 
-#        fig.subplots_adjust(top=0.82,bottom=0.07,left=0.06,right=0.9,hspace=0.4,wspace=0.25)
-#        fig.tight_layout(pad=3, h_pad=3, w_pad=3)
-        # Set initial plot 4 parameters - this is an interactive barplot
-        ax4.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off')
-#        ax4.set_title('Monthly Trends')
-         
-        # Plot 1 - Payout Frequency Distribution
-        im = ax1.imshow(frequencysum.tolist())
-        ax1.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off') 
-        ax1.set_title('US average: '+str(round(np.nanmean(frequencysum),2)))#Payment Frequency\n 
-        divider1 = make_axes_locatable(ax1)
-        cax1 = divider1.append_axes("left", size="5%", pad=0.05)
-        cbar = plt.colorbar(im, cax=cax1)
-        cbar.set_label('Potential Payouts', rotation=90, size = 10,labelpad =10,fontweight = 'bold')
-        cbar.ax.yaxis.set_label_position('left')
-        cbar.ax.yaxis.set_ticks_position('left')
-    
-        # Plot 2 - Payment Calculation Factor Distribution
-        im2 = ax2.imshow(meanpcf.tolist())
-        ax2.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off') 
-        ax2.set_title('US average: '+str(round(np.nanmean(meanpcf),2)))# Payment Calculation Factors\n  
-        divider2 = make_axes_locatable(ax2)
-        cax2 = divider2.append_axes("right", size="5%", pad=0.05)
-        cbar2 = plt.colorbar(im2, cax=cax2)
-        cbar2.set_label('Payment Calculation\n Factor', rotation=270, size = 10,labelpad =25,fontweight = 'bold')
-          
-        # Plot 3- Changes
-        im3 = ax3.imshow(mainmap.tolist())
-        ax3.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off') 
-        ax3.set_title(title2)#title + '\n'+ 
-        divider3 = make_axes_locatable(ax3)
-        cax3 = divider3.append_axes("left", size="5%", pad=0.05)
-        cbar3 = plt.colorbar(im3, cax=cax3)
-        cbar3.set_label(label, rotation=90, size = 12,labelpad =10,fontweight = 'bold')
-        cbar3.ax.yaxis.set_label_position('left')
-        cbar3.ax.yaxis.set_ticks_position('left')
-    
-        # shift subplots down a bit
-        fig.subplots_adjust(top=.85)  
-        
-    
-        ###########################################################################   
-        ############# Interactive Monthly Payout Trends ###########################
-        ###########################################################################
-        # Define click event        
-        coords = []
-        def onclick(event):
-            global ix, iy
-            ix, iy = event.xdata, event.ydata
-            #print('x = %d, y = %d'%(ix, iy)) # This is just for testing
-        
-            global coords
-            coords.append((ix, iy))
-            
-            if event.inaxes == ax1: 
-                calctype = 'Sum '
-                ax = ax1
-                series = frequencies
-                ylim = 12
-                xlabel = 'Year'
-                rot = -45
-                bartitle = "Potential Payouts"
-                pointtype = 'yo'
-                col = 'yellow'
-                print ("event in ax1")
-                yearly = 1
-            elif event.inaxes == ax2:
-                calctype = 'Average '
-                ax = ax2            
-                bartitle = "Mean pcfs"            
-                rot = -45
-                series = pcfs
-                ylim = 1
-                xlabel = 'Bi-Monthly Interval'
-                pointtype = 'ro'
-                col = 'red'
-                print ("event in ax2")  
-                yearly = 0
-            elif event.inaxes == ax3:
-                calctype = 'Average '
-                ax = ax3
-                bartitle = title
-                rot = -45
-                series = series1            
-                pointtype = 'wo'
-                ylim = ylimit
-                xlabel = 'Bi-Monthly Interval'
-                col = 'white'
-                print ("event in ax3") 
-                yearly = 0
-        #         Colors:   'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'
-        
-            # Catch the target grid cell
-            targetid  = grid[round(float(iy)),round(float(ix))]
-            index = np.where(grid == targetid)
-    
-            # Create the time series of data at that gridcell
-            timeseries = [[item[0],item[1][index]] for item in series]
-            
-            # For title
-            years = [int(item[0][-6:-2]) for item in timeseries]
-            year1 = str(min(years)) 
-            year2 = str(max(years))
-            
-            # For the x axis and value matching
-            intervals = [format(int(interval),'02d') for interval in range(1,12)]
-            months = {1:'Jan-Feb',
-                      2:'Feb-Mar',
-                      3:'Mar-Apr',
-                      4:'Apr-May',
-                      5:'May-Jun',
-                      6:'Jun-Jul',
-                      7:'Jul-Aug',
-                      8:'Aug-Sep',
-                      9:'Sep-Oct',
-                      10:'Oct-Nov',
-                      11:'Nov-Dec'}
-            
-            # The actual values
-            valuelist = [[series[1] for series in timeseries if series[0][-2:] ==  interval] for interval in intervals]
-        
-            # In tuple form for the bar chart
-            averages =  tuple(np.asarray([np.mean(sublist) for sublist in valuelist]))
-            intlabels = tuple([months.get(i) for i in range(1,12)])
-            x = np.arange(len(intervals))    
-            
-            # A yearly series of sums for the frequency box
-            if yearly == 1:
-                timeseries = [[item[0],item[1][index]] for item in series]
-               
-                # For title
-                years = [int(item[0][-6:-2]) for item in timeseries]
-                year1 = str(min(years)) 
-                year2 = str(max(years))
-               
-                # For the x axis and value matching
-                intervals = [str(interval) for interval in range(int(year1),int(year2)+1)]
-               
-                # The actual values
-                valuelist = [[series[1] for series in timeseries if series[0][-6:-2] ==  interval] for interval in intervals]
-               
-                # In tuple form for the bar chart            
-                axisinterval= round((int(year2)-int(year1))/10)
-                averages =  tuple(np.asarray([np.nansum(sublist) for sublist in valuelist]))
-                intlabels = tuple([interval for interval in range(int(year1),int(year2)+1,axisinterval)])
-                x = np.arange(len(intervals))
-        
-            
-            # For adding a spot to the map
-            spot = np.where(grid == targetid)
-            
-            # Clears data but not axes
-            ax4.cla()  
-        
-            # Plot the bar chart
-            ax4.tick_params(which='both',right = 'on',left = 'off', bottom='on', top='off',labelleft = 'off',labelright = 'on',labelbottom='on')
-            ax4.yaxis.set_label_position("right")
-            ax4.bar(x,averages, align='center', alpha=0.5,color = col,linewidth = 2,edgecolor = 'black')
-            ax4.set_ylabel(calctype + bartitle, rotation=270, labelpad=15,fontweight = 'bold')
-            ax4.set_ylim([0, ylim])
-            ax4.set_title('Grid ID: '+str(int(targetid)))
-            if yearly == 1: 
-                ax4.set_xticks([])
-                ax4.set_xticks(np.arange(1,len(intervals)+1,axisinterval),minor = True)
-                ax4.set_xticklabels([])
-                ax4.set_xticklabels(intlabels, rotation = rot, ha="left",fontsize=12, minor = True)
-                ax4.set_xlabel(xlabel)
-            else:
-                ax4.set_xticks(np.arange(len(intervals)))
-                ax4.set_xticklabels(intlabels, rotation = rot, ha="left",fontsize=12)
-                ax4.set_xlabel(xlabel)
-    
-            # Add spot to map
-            point = ax.plot(int(spot[1]),int(spot[0]),pointtype, markersize=6,markeredgewidth=1, markeredgecolor='k')#, edgecolor='black',linewidth='1'
-            
-            # Draw it all
-            #cfm = fig.get_current_fig_manager()
-            #cfm.frame.Maximize(True)
-            fig.canvas.draw()
-            
-            return coords
-        global cid
-        cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    except:
-        PrintException()
+#    try:
+#    # Main Title
+#        fig = plt.figure(figsize=(35, 20))
+#        if startyear == endyear:
+#            endyear = ""
+#        else:
+#            endyear = ' - '+str(endyear)
+#        fig.suptitle('PRF with '+indexname+": "+str(startyear)+endyear+'\nBaseline year: '+str(baselineyear)+'; Strike Level: %'+ str(int(strike*100))+'; Rate Year: '+str(actuarialyear), fontsize=12,fontweight = 'bold')
+#             
+#        # Establish subplot structure
+#        ax1 = plt.subplot2grid((3, 4), (0, 0), colspan = 2)
+#        ax2 = plt.subplot2grid((3, 4), (0, 2), colspan = 2)  
+#        ax3 = plt.subplot2grid((3, 4), (1, 0), colspan = 3,rowspan = 2)    
+#        ax4 = plt.subplot2grid((3, 4), (1, 3), colspan = 1,rowspan = 2) 
+##        fig.subplots_adjust(top=0.82,bottom=0.07,left=0.06,right=0.9,hspace=0.4,wspace=0.25)
+##        fig.tight_layout(pad=3, h_pad=3, w_pad=3)
+#        # Set initial plot 4 parameters - this is an interactive barplot
+#        ax4.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off')
+##        ax4.set_title('Monthly Trends')
+#         
+#        # Plot 1 - Payout Frequency Distribution
+#        im = ax1.imshow(frequencysum.tolist())
+#        ax1.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off') 
+#        ax1.set_title('US average: '+str(round(np.nanmean(frequencysum),2)))#Payment Frequency\n 
+#        divider1 = make_axes_locatable(ax1)
+#        cax1 = divider1.append_axes("left", size="5%", pad=0.05)
+#        cbar = plt.colorbar(im, cax=cax1)
+#        cbar.set_label('Potential Payouts', rotation=90, size = 10,labelpad =10,fontweight = 'bold')
+#        cbar.ax.yaxis.set_label_position('left')
+#        cbar.ax.yaxis.set_ticks_position('left')
+#    
+#        # Plot 2 - Payment Calculation Factor Distribution
+#        im2 = ax2.imshow(meanpcf.tolist())
+#        ax2.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off') 
+#        ax2.set_title('US average: '+str(round(np.nanmean(meanpcf),3)))# Payment Calculation Factors\n  
+#        divider2 = make_axes_locatable(ax2)
+#        cax2 = divider2.append_axes("right", size="5%", pad=0.05)
+#        cbar2 = plt.colorbar(im2, cax=cax2)
+#        cbar2.set_label('Payment Calculation\n Factor', rotation=270, size = 10,labelpad =25,fontweight = 'bold')
+#          
+#        # Plot 3- Changes
+#        im3 = ax3.imshow(mainmap.tolist())
+#        ax3.tick_params(which='both',right = 'off',left = 'off', bottom='off', top='off',labelleft = 'off',labelbottom='off') 
+#        ax3.set_title(title2)#title + '\n'+ 
+#        divider3 = make_axes_locatable(ax3)
+#        cax3 = divider3.append_axes("left", size="5%", pad=0.05)
+#        cbar3 = plt.colorbar(im3, cax=cax3)
+#        cbar3.set_label(label, rotation=90, size = 12,labelpad =10,fontweight = 'bold')
+#        cbar3.ax.yaxis.set_label_position('left')
+#        cbar3.ax.yaxis.set_ticks_position('left')
+#    
+#        # shift subplots down a bit
+#        fig.subplots_adjust(top=.85)  
+#        
+#    
+#        ###########################################################################   
+#        ############# Interactive Monthly Payout Trends ###########################
+#        ###########################################################################
+#        # Define click event        
+#        coords = []
+#        def onclick(event):
+#            global ix, iy
+#            ix, iy = event.xdata, event.ydata
+#            #print('x = %d, y = %d'%(ix, iy)) # This is just for testing
+#        
+#            global coords
+#            coords.append((ix, iy))
+#            
+#            if event.inaxes == ax1: 
+#                calctype = 'Sum '
+#                ax = ax1
+#                series = frequencies
+#                ylim = 12
+#                xlabel = 'Year'
+#                rot = -45
+#                bartitle = "Potential Payouts"
+#                pointtype = 'yo'
+#                col = 'yellow'
+#                print ("event in ax1")
+#                yearly = 1
+#            elif event.inaxes == ax2:
+#                calctype = 'Average '
+#                ax = ax2            
+#                bartitle = "Mean pcfs"            
+#                rot = -45
+#                series = pcfs
+#                ylim = 1
+#                xlabel = 'Bi-Monthly Interval'
+#                pointtype = 'ro'
+#                col = 'red'
+#                print ("event in ax2")  
+#                yearly = 0
+#            elif event.inaxes == ax3:
+#                calctype = 'Average '
+#                ax = ax3
+#                bartitle = title
+#                rot = -45
+#                series = series1            
+#                pointtype = 'wo'
+#                ylim = ylimit
+#                xlabel = 'Bi-Monthly Interval'
+#                col = 'white'
+#                print ("event in ax3") 
+#                yearly = 0
+#        #         Colors:   'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'
+#        
+#            # Catch the target grid cell
+#            targetid  = grid[round(float(iy)),round(float(ix))]
+#            index = np.where(grid == targetid)
+#    
+#            # Create the time series of data at that gridcell
+#            timeseries = [[item[0],item[1][index]] for item in series]
+#            
+#            # For title
+#            years = [int(item[0][-6:-2]) for item in timeseries]
+#            year1 = str(min(years)) 
+#            year2 = str(max(years))
+#            
+#            # For the x axis and value matching
+#            intervals = [format(int(interval),'02d') for interval in range(1,12)]
+#            months = {1:'Jan-Feb',
+#                      2:'Feb-Mar',
+#                      3:'Mar-Apr',
+#                      4:'Apr-May',
+#                      5:'May-Jun',
+#                      6:'Jun-Jul',
+#                      7:'Jul-Aug',
+#                      8:'Aug-Sep',
+#                      9:'Sep-Oct',
+#                      10:'Oct-Nov',
+#                      11:'Nov-Dec'}
+#            
+#            # The actual values
+#            valuelist = [[series[1] for series in timeseries if series[0][-2:] ==  interval] for interval in intervals]
+#        
+#            # In tuple form for the bar chart
+#            averages =  tuple(np.asarray([np.mean(sublist) for sublist in valuelist]))
+#            intlabels = tuple([months.get(i) for i in range(1,12)])
+#            x = np.arange(len(intervals))    
+#            
+#            # A yearly series of sums for the frequency box
+#            if yearly == 1:
+#                timeseries = [[item[0],item[1][index]] for item in series]
+#               
+#                # For title
+#                years = [int(item[0][-6:-2]) for item in timeseries]
+#                year1 = str(min(years)) 
+#                year2 = str(max(years))
+#               
+#                # For the x axis and value matching
+#                intervals = [str(interval) for interval in range(int(year1),int(year2)+1)]
+#               
+#                # The actual values
+#                valuelist = [[series[1] for series in timeseries if series[0][-6:-2] ==  interval] for interval in intervals]
+#               
+#                # In tuple form for the bar chart            
+#                axisinterval= round((int(year2)-int(year1))/10)
+#                averages =  tuple(np.asarray([np.nansum(sublist) for sublist in valuelist]))
+#                intlabels = tuple([interval for interval in range(int(year1),int(year2)+1,axisinterval)])
+#                x = np.arange(len(intervals))
+#        
+#            
+#            # For adding a spot to the map
+#            spot = np.where(grid == targetid)
+#            
+#            # Clears data but not axes
+#            ax4.cla()  
+#        
+#            # Plot the bar chart
+#            ax4.tick_params(which='both',right = 'on',left = 'off', bottom='on', top='off',labelleft = 'off',labelright = 'on',labelbottom='on')
+#            ax4.yaxis.set_label_position("right")
+#            ax4.bar(x,averages, align='center', alpha=0.5,color = col,linewidth = 2,edgecolor = 'black')
+#            ax4.set_ylabel(calctype + bartitle, rotation=270, labelpad=15,fontweight = 'bold')
+#            ax4.set_ylim([0, ylim])
+#            ax4.set_title('Grid ID: '+str(int(targetid)))
+#            if yearly == 1: 
+#                ax4.set_xticks([])
+#                ax4.set_xticks(np.arange(1,len(intervals)+1,axisinterval),minor = True)
+#                ax4.set_xticklabels([])
+#                ax4.set_xticklabels(intlabels, rotation = rot, ha="left",fontsize=12, minor = True)
+#                ax4.set_xlabel(xlabel)
+#            else:
+#                ax4.set_xticks(np.arange(len(intervals)))
+#                ax4.set_xticklabels(intlabels, rotation = rot, ha="left",fontsize=12)
+#                ax4.set_xlabel(xlabel)
+#    
+#             Add spot to map
+#            point = ax.plot(int(spot[1]),int(spot[0]),pointtype, markersize=6,markeredgewidth=1, markeredgecolor='k')#, edgecolor='black',linewidth='1'
+#            
+#            # Draw it all
+#            #cfm = fig.get_current_fig_manager()
+#            #cfm.frame.Maximize(True)
+#            fig.canvas.draw()
+#            
+#            return coords
+#        global cid
+#        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+#    except:
+#        PrintException()
     ###########################################################################
     ############## Bundle up the results for a tidy return ####################
     ###########################################################################
-    insurance_package_all = [producerpremiums,indemnities]
+    insurance_package_all = [producerpremiums,indemnities,frequencies,pcfs,meanppremium,meanindemnity,frequencysum,meanpcf]
     insurance_package_average = [meanppremium,meanindemnity]
-    index_package_all = [frequencyrays,pcfrays]
+    index_package_all = [frequencies,pcfs]
     index_package = [frequencysum,meanpcf]
-    return([insurance_package_all,insurance_package_average,index_package_all,index_package,cid,coords])
+    return(insurance_package_all)#,cid,coords
     
 ###############################################################################
 ########################## Indemnity Calculator ###############################
@@ -1037,8 +1048,8 @@ def readRasters(rasterpath,navalue = -9999):
     """
     print("Converting raster to numpy array...")
     list=[]
-    if rasterpath[-1:] != '\\':
-        rasterpath = rasterpath+'\\'
+#    if rasterpath[-1:] != '\\':
+#        rasterpath = rasterpath+'\\'
     files = glob.glob(rasterpath+'*.tif')
     names = [files[i][len(rasterpath):] for i in range(len(files))]
     sample = gdal.Open(files[0])
