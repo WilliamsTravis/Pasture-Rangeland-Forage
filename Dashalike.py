@@ -233,7 +233,7 @@ app.layout = html.Div(
                             id='index_choice',
                             options=indices,
                             multi=False,
-                            value=[]#'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
+                            value='D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
                         ),
                         html.P('Choose Information Type'),
                         dcc.Dropdown(
