@@ -450,7 +450,7 @@ def indexInsurance(rasterpath, actuarialyear, studyears, baselineyears,  product
     net = meanindemnity - meanppremium
     nets = [[indemnities[i][0],indemnityarrays[i] - premiumarrays[i]] for i in range(len(indemnityarrays))]
     lossratio = np.round(meanindemnity/meantpremium,2)
-    lossratios = [[indemnities[i][0],indemnityarrays[i] / premiumarrays[i]] for i in range(len(indemnityarrays))]
+    lossratios = [[indemnities[i][0],indemnityarrays[i] / totalpremiumarrays[i]] for i in range(len(indemnityarrays))]
     
     ###########################################################################
     ################### We have to print and plot before returning ############
@@ -700,10 +700,10 @@ def indexInsurance(rasterpath, actuarialyear, studyears, baselineyears,  product
     ###########################################################################
     ############## Bundle up the results for a tidy return ####################
     ###########################################################################
-    insurance_package_all = [producerpremiums,indemnities,frequencies,pcfs,meanppremium,meanindemnity,frequencysum,meanpcf]
-    insurance_package_average = [meanppremium,meanindemnity]
-    index_package_all = [frequencies,pcfs]
-    index_package = [frequencysum,meanpcf]
+    insurance_package_all = [producerpremiums, indemnities, frequencies, pcfs, nets, lossratios, meanppremium, meanindemnity, frequencysum, meanpcf, net, lossratio]
+#    insurance_package_average = [meanppremium,meanindemnity]
+#    index_package_all = [frequencies,pcfs]
+#    index_package = [frequencysum,meanpcf]
     return(insurance_package_all)#,cid,coords
     
 ###############################################################################

@@ -31,7 +31,6 @@ indexit = True
 
 ####################### Test methods for drought indices ######################
 rasterpath = 'd:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
-#rasterpath = r'E:\data\droughtindices\grace\nad83\rz\monthly\quarteres'
 method = 2 # method 2 set strike levels based on matching probability of occurrence with the RMA index
 adjustit = True
 standardizeit = True
@@ -52,7 +51,7 @@ difference = 0 # 0 = indemnities, 1 = net payouts, 2 = lossratios
 [insurance_package_all, 
  insurance_package_average,#,cid,coords
  index_package_all,index_package] = indexInsurance(rasterpath, actuarialyear, studyears, baselineyears, productivity, strike, 
-                             acres, allocation, adjustit = adjustit,standardizeit = standardizeit, 
+                             acres, allocation, adjustit = adjustit, standardizeit = standardizeit, 
                              indexit = indexit, method = method, difference = difference) 
 # Return order:
 #insurance_package_all = [producerpremiums,indemnities]
