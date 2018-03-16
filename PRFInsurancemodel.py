@@ -46,7 +46,7 @@ difference = 0 # 0 = indemnities, 1 = net payouts, 2 = lossratios
 studyears = [2000,2017]
 baselineyears = [1948, 2016]
 return_type = 5
-difference = 0
+
 ###############################################################################
 ############################ Create the App Object ############################
 ###############################################################################
@@ -68,20 +68,20 @@ cache.init_app(server)
 # Index Paths
 indices = [{'label':'RMA','value':'D:\\data\\droughtindices\\noaa\\nad83\\raw\\'},
            {'label':'PDSI','value':'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'},
-          {'label':'PDSI-Self Calibrated','value':'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\'},
-          {'label':'Palmer Z Index','value':'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\'},
-          {'label':'EDDI-1','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\'},
-          {'label':'EDDI-2','value': 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\'},
-          {'label':'EDDI-3','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\'},
-          {'label':'EDDI-6','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\'},
-          {'label':'SPI-1' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\1month\\'},
-          {'label':'SPI-2' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\2month\\'},
-          {'label':'SPI-3' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\3month\\'},
-          {'label':'SPI-6' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\6month\\'},
-          {'label':'SPEI-1' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\1month\\'},
-          {'label':'SPEI-2' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\2month\\'},
-          {'label':'SPEI-3' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\3month\\'},
-          {'label':'SPEI-6','value': 'D:\\data\\droughtindices\\spei\\nad83\\6month\\'}]
+           {'label':'PDSI-Self Calibrated','value':'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\'},
+           {'label':'Palmer Z Index','value':'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\'},
+           {'label':'EDDI-1','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\'},
+           {'label':'EDDI-2','value': 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\'},
+           {'label':'EDDI-3','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\'},
+           {'label':'EDDI-6','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\'},
+           {'label':'SPI-1' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\1month\\'},
+           {'label':'SPI-2' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\2month\\'},
+           {'label':'SPI-3' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\3month\\'},
+           {'label':'SPI-6' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\6month\\'},
+           {'label':'SPEI-1' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\1month\\'},
+           {'label':'SPEI-2' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\2month\\'},
+           {'label':'SPEI-3' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\3month\\'},
+           {'label':'SPEI-6','value': 'D:\\data\\droughtindices\\spei\\nad83\\6month\\'}]
 
 # Index names, using the paths we already have. These are for titles.
 indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\raw\\': 'Risk Management Agency Rainfall Index',
@@ -264,17 +264,17 @@ app.layout = html.Div(
                     [
                         html.P('Drought Index'),
                         dcc.Dropdown(
-                            id='index_choice',
-                            options=indices,
-                            multi=False,
-                            value='D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'#'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
+                            id = 'index_choice',
+                            options = indices,
+                            multi = False,
+                            value = 'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'#'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
                         ),
                         html.P('Choose Information Type'),
                         dcc.Dropdown(
-                            id='return_type',
-                            options=returns,
-                            multi=False,
-                            value=5
+                            id = 'return_type',
+                            options = returns,
+                            multi = False,
+                            value = []
                         ),
                     ],
                     className='six columns'
@@ -349,27 +349,25 @@ app.layout = html.Div(
             ],
             className='row'
         ),
-    html.H4('Summary Statistics'),
-    html.Div([
-        html.Div( 
-            children=dt.DataTable(
-                rows=[{}],
-
-                # optional - sets the order of columns
-#                columns=columns,
-
-                editable=True,
-
-                id='summary_table'
-            ),
-            className='twelve columns',
-            id='output'
-        ),
-        
+#    html.H4('Summary Statistics'),
+#    html.Div([
+#        html.Div( 
+#            children=dt.DataTable(
+#                rows=[{}],
+#
+#                # optional - sets the order of columns
+##                columns=columns,
+#
+#                editable=True,
+#
+#                id='summary_table'
+#            ),
+#            className='twelve columns',
+#            id='output'
+#        ),
+#        
 #    className='twelve columns'
-    ]),
-        
-    html.Div(id='signal', style={'display': 'none'})
+        html.Div(id='signal', style={'display': 'none'})
     ],
     className='ten columns offset-by-one'
 )
@@ -780,15 +778,6 @@ def makeHist(signal,return_type):
 
 
 
-
-
-
-
-
-
-
-
-
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -868,86 +857,68 @@ def makeHist(signal,return_type):
 
 
 
-
-
-@app.callback(Output('summary_table','rows'),
-               [Input('signal','children'),
-                Input('summary_table','row_update')])
-#                Input('summary_table','rows')])
-def makeSummary(signal,table):
-    # get old summary
-#    summary_table = json.loads(summary_table,indent = 2)
-    
-    # Get data
-    df = retrieve_data(signal)
-    
-    # Signals#    
-    signal = json.loads(signal)
-
-    # get rows
-#    rows = table['rows']
-        
-    #index_choice,actuarial_year,year_slider,year_slider2,strike_level,acres
-    indexname = indexnames.get(signal[0])
-    strike = signal[4]
-    baselinerange = signal[3][1] - signal[3][0]
-    studyrange = signal[2][1] - signal[2][0]
-        
-    name = indexnames.get(signal[0])
-    indexname = indexname.replace("\\","")
-    
-    if indexname[-6:-5] == '1': 
-        scale = int(indexname[-7:-6])
-    else:
-        scale = np.nan
-        
-    # We want the indemnity payouts and perhaps loss ratios (7 and 11)
-    meanindemnity = df[7]
-    lossratios = df[11]
-    
-#    title = indexname + " Payout Statistics <br>Average Unsubsidized Loss Ratio: " + str(round(np.nanmean(lossratios),2))
-    info = [{"Index": name,
-              "Strike": strike,
-                "Baseline Range": baselinerange,
-                 "Study Range": studyrange,   
-                  "Temporal Scale": scale,
-                   "Max Payment": round(np.nanmax(meanindemnity),2),
-                    "Minimum Payment":round(np.nanmin(meanindemnity),2),
-                     "Median Payment": round(np.nanmedian(meanindemnity),2),
-                      "Mean Payment":round(np.nanmedian(meanindemnity),2),
-                       "Payment Standard Deviation":round(np.nanstd(meanindemnity),2)}]
-        
-#    rows = json.loads(rows)
-    rows.append(info)
-#    rows = json.dums(rows)
-    
-#    layout_count['title'] = title
-#    layout_count['dragmode'] = 'select'
-#    layout_count['showlegend'] = False
-#    layout_count['xaxis'] = dict(tickvals = x, ticktext = intlabels)
-
-#    figure = dict(data=data, layout=layout_count)
-    return info
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#
+#
+#@app.callback(Output('summary_table','rows'),
+#               [Input('signal','children'),
+#                Input('summary_table','row_update')])
+##                Input('summary_table','rows')])
+#def makeSummary(signal,table):
+#    # get old summary
+##    summary_table = json.loads(summary_table,indent = 2)
+#    
+#    # Get data
+#    df = retrieve_data(signal)
+#    
+#    # Signals#    
+#    signal = json.loads(signal)
+#
+#    # get rows
+##    rows = table['rows']
+#        
+#    #index_choice,actuarial_year,year_slider,year_slider2,strike_level,acres
+#    strike = signal[4]
+#    baselinerange = signal[3][1] - signal[3][0]
+#    studyrange = signal[2][1] - signal[2][0]
+#        
+#    name = names.get(signal[0])
+#    indexname = name.replace("\\","")
+#    if indexname[-6:-5] == '1': 
+#        scale = int(indexname[-7:-6])
+#    else:
+#        scale = np.nan
+#        
+#    # We want the indemnity payouts and perhaps loss ratios (7 and 11)
+#    meanindemnity = df[7]
+#    lossratios = df[11]
+#    
+##    title = indexname + " Payout Statistics <br>Average Unsubsidized Loss Ratio: " + str(round(np.nanmean(lossratios),2))
+#    info = [{"Index": name,
+#              "Strike": strike,
+#                "Baseline Range": baselinerange,
+#                 "Study Range": studyrange,   
+#                  "Temporal Scale": scale,
+#                   "Max Payment": round(np.nanmax(meanindemnity),2),
+#                    "Minimum Payment":round(np.nanmin(meanindemnity),2),
+#                     "Median Payment": round(np.nanmedian(meanindemnity),2),
+#                      "Mean Payment":round(np.nanmedian(meanindemnity),2),
+#                       "Payment Standard Deviation":round(np.nanstd(meanindemnity),2)}]
+#        
+##    rows = json.loads(rows)
+#    rows.append(info)
+##    rows = json.dums(rows)
+#    
+##    layout_count['title'] = title
+##    layout_count['dragmode'] = 'select'
+##    layout_count['showlegend'] = False
+##    layout_count['xaxis'] = dict(tickvals = x, ticktext = intlabels)
+#
+##    figure = dict(data=data, layout=layout_count)
+#    return info
+#
+#
+#
+#
 
 # In[]:
 # Main
