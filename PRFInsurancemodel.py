@@ -40,7 +40,7 @@ cache.init_app(server)
 ############################ Create Lists and Dictionaries ####################
 ###############################################################################
 # Index Paths
-indices = [{'label':'NOAA','value':'D:\\data\\droughtindices\\noaa\\nad83\\raw\\'},
+indices = [{'label':'NOAA','value':'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\'},
            {'label':'PDSI','value':'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'},
            {'label':'PDSI-Self Calibrated','value':'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\'},
            {'label':'Palmer Z Index','value':'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\'},
@@ -57,7 +57,7 @@ indices = [{'label':'NOAA','value':'D:\\data\\droughtindices\\noaa\\nad83\\raw\\
            {'label':'SPEI-3' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\3month\\'},
            {'label':'SPEI-6','value': 'D:\\data\\droughtindices\\spei\\nad83\\6month\\'}]
 # Index names, using the paths we already have. These are for titles.
-indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\raw\\': 'NOAA CPC-Derived Rainfall Index',
+indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'NOAA CPC-Derived Rainfall Index',
             'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\': 'Palmer Drought Severity Index',
           'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\': 'Self-Calibrated Palmer Drought Severity Index',
           'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\': 'Palmer Z Index',
@@ -175,11 +175,11 @@ layout = dict(
     margin=dict(
         l=35,
         r=35,
-        b=35,
+        b=65,
         t=65
     ),
     hovermode="closest",
-    plot_bgcolor="#8CD6DB",
+    plot_bgcolor="#e6efbf",
     paper_bgcolor="#083C04",
     legend=dict(font=dict(size=10), orientation='h'),
     title='Potential Payout Frequencies',
@@ -392,17 +392,6 @@ def global_store(signal):
         signal = signal
         
     signal = json.loads(signal)
-#        
-    if signal[0] == 'D:\\data\\droughtindices\\noaa\\nad83\\raw\\':
-        method = 1 # Method 1 is the official way of calculating triggers and magnitudes
-        adjustit = False
-        standardizeit = False
-        indexit = True
-    else:
-        method = 2 # method 2 set strike levels based on matching probability of occurrence with the RMA index
-        adjustit = True
-        standardizeit = True
-        indexit = False
         
     # Rename signals for comprehension
     rasterpath = signal[0]
@@ -414,9 +403,7 @@ def global_store(signal):
      
     # Get the new insurance arrays with the mondo function. 
     df = indexInsurance(rasterpath, actuarialyear, studyears, 
-                             baselineyears, productivity, strike ,acres, allocation, 
-                             adjustit = adjustit,standardizeit = standardizeit, 
-                             indexit = indexit, method = method, plot = False)
+                             baselineyears, productivity, strike ,acres, allocation, scale = True,plot = False)
     return df
         
 def retrieve_data(signal):
@@ -707,42 +694,37 @@ def makeSeries(clickData,signal,return_type):
     indx = int(return_type) - 6
     
     series = df[indx]
-
+    
+    # For title
+    years = [item[0][-6:-2]+"/"+ item[0][-2:] for item in series]
+    year1 = str(min(years)) 
+    year2 = str(max(years))
+            
     # Catch the target grid cell
     index = np.where(grid == targetid)
     
     # Create the time series of data at that gridcell
     values = [float(item[1][index]) for item in series]
     
-
-    # For title
-    years = [item[0][-6:-2]+"/"+ item[0][-2:] for item in series]
-    year1 = str(min(years)) 
-    year2 = str(max(years))
-        
-    # For yearly frequency sums
-    if int(return_type) == 8:
-        years = np.unique([item[0][-6:-2] for item in series])
-        values = [np.sum([item[1][index] for item in series if item[0][-6:-2] == y]) for y in years] 
-    layout_count = copy.deepcopy(layout)
-
     data = [
         dict(
-            type='scatter',
-            mode='lines+markers',
-            name= returnames.get(int(return_type)),
-            x = years,
-            y = values,
-            line=dict(
-                    shape="spline",
-                    smoothing=2,
-                    width=3,
-                    color='#083C04'
-            ),
-            marker=dict(symbol='diamond-open')
+            x=years,        
+            y=values,
+            type='bar',            
+            name= returnabbrvs.get(int(return_type))+' Value Ditribution',
+            opacity=1,
+            hoverinfo='skip'
         ),
+#        dict(
+#            type='bar',
+#            x=bins,
+#            y=hists,
+#            marker = dict(
+#                    color = '#000000'
+#            ),
+#        ),
     ]
-        
+    layout_count = copy.deepcopy(layout)
     layout_count['title'] =  returnabbrvs.get(int(return_type))+' Time Series <br> Grid ID: ' + str(int(targetid))
     layout_count['dragmode'] = 'select'
     layout_count['showlegend'] = False

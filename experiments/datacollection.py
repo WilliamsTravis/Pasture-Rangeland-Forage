@@ -20,10 +20,10 @@ indices = ['D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\',
  'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\',
  'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\',
  'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\',
- 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\',
- 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\',
- 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\',
- 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\',
+# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\',
+# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\',
+# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\',
+# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\',
  'D:\\data\\droughtindices\\spi\\nad83\\1month\\',
  'D:\\data\\droughtindices\\spi\\nad83\\2month\\',
  'D:\\data\\droughtindices\\spi\\nad83\\3month\\',
@@ -38,10 +38,10 @@ indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'NOAA',
             'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\': 'PDSI',
           'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\': 'PDSIsc',
           'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\': 'PDSIz',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\':'EDDI-1',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\':'EDDI-2',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\':'EDDI-3',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\':'EDDI-6',
+#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\':'EDDI-1',
+#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\':'EDDI-2',
+#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\':'EDDI-3',
+#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\':'EDDI-6',
           'D:\\data\\droughtindices\\spi\\nad83\\1month\\':'SPI-1',
           'D:\\data\\droughtindices\\spi\\nad83\\2month\\':'SPI-2',
           'D:\\data\\droughtindices\\spi\\nad83\\3month\\':'SPI-3',
@@ -90,6 +90,9 @@ prfdf = pd.DataFrame(columns = columns)
 #prfdf = pd.read_csv("G:\\My Drive\\THESIS\\data\\Index Project\\PRFIndex_specs.csv")
 iteration = len(prfdf.index)
 totaliterations = len(indices)*len(actuarialyear)*len(baselineyears)*len(studyears)*len(strikes)
+
+# I am taking out the other baseline years for now. It is meaningless for anything but the rainfall index
+baselineyears = [[1948, 2017]]
 for by in baselineyears:
     print("Choosing baslein years...")
     for i in indices:
@@ -106,9 +109,7 @@ for by in baselineyears:
         else:
             indexlist = adjustIntervals(indexlist)
             arrays = [indexlist[i][1] for i in range(len(indexlist))]
-            amin = np.nanmin(arrays)
-            amax = np.nanmax(arrays)
-            indexlist = standardize(indexlist,amin,amax)
+            indexlist = standardize(indexlist)
             categorypath = 'data\\Index Categories\\indexcategories-standardized.csv'
         for ay in actuarialyear:
             print("Bundling Actuarials...")
@@ -116,10 +117,10 @@ for by in baselineyears:
                 actuarialpath = 'data\\actuarial\\2017\\rasters\\nad83\\'
             elif ay == 2018:
                 actuarialpath = 'data\\actuarial\\2018\\rasters\\nad83\\'
-            premiumpath = actuarialpath+'premiums'
-            basepath = actuarialpath+'bases\\rates'
-            allocationminpath = actuarialpath+'bases\\allocations\\min'
-            allocationmaxpath = actuarialpath+'bases\\allocations\\max'
+            premiumpath = actuarialpath+'premiums\\'
+            basepath = actuarialpath+'bases\\rates\\'
+            allocationminpath = actuarialpath+'bases\\allocations\\min\\'
+            allocationmaxpath = actuarialpath+'bases\\allocations\\max\\'
             premiums = readRasters2(premiumpath,-9999.)[0] #[0] because we can use the original geometry to write these to rasters.     
             bases = readRasters2(basepath,-9999.)[0]     
             allocmins = readRasters2(allocationminpath,-9999.)[0]
