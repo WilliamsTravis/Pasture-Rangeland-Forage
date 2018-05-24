@@ -3,10 +3,9 @@
 Created on Sun May 28 21:14:48 2017
 
 @author: Travis
-
 """
 
-import os, gdal, time, inspect, shutil, pickle, glob, urllib, linecache, sys
+import os, gdal, time, inspect, shutil, pickle, glob,  linecache, sys
 import datetime
 from datetime import timedelta
 from itertools import chain
@@ -29,7 +28,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_caching import Cache
 import dash
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, Event
 import dash_table_experiments as dt
 import dash_core_components as dcc
 import dash_html_components as html
@@ -41,7 +40,8 @@ from plotly.graph_objs import *
 import plotly.graph_objs as go
 import rasterio
 import boto3
-
+import urllib
+import botocore
 
 def PrintException():
     exc_type, exc_obj, tb = sys.exc_info()
@@ -143,8 +143,7 @@ def arrayMode(array):
         indx = frequencies.index(mx)
         return uniques[indx]
     return np.apply_along_axis(mode, axis = 0, arr = array)
-
-
+        
 ###########################################################################
 ##################### Basis Risk Check ####################################
 ###########################################################################
@@ -315,7 +314,52 @@ def indexHist(array,guarantee = 1,mostfreq = 'n',binumber = 1000, limmax = 0, sl
 #    cfm = plt.get_current_fig_manager()
 #    cfm.window.move(850,90)
 
+###############################################################################
+########################## AWS Retrieval ######################################
+###############################################################################
+# For singular Numpy File - Might have to write this for a compressed numpy 
+def getNPY(path):
+    key=[i.key for i in bucket.objects.filter(Prefix = path)][0] # Probably an easier way
+    obj = resource.Object("pasture-rangeland-forage", key)
+    try:
+        with io.BytesIO(obj.get()["Body"].read()) as f:
+            # rewind the file
+            f.seek(0)
+            array = np.load(f)
+            array = array.f.arr_0    
+    except botocore.exceptions.ClientError as e:
+        error = e
+        if error.response['Error']['Code'] == "404":
+            array = "The object does not exist."
+        else:
+            raise
+    return array
 
+# For 3D Numpy files
+def getNPYs(numpypath,csvpath):
+    # Get arrays
+    key=[i.key for i in bucket.objects.filter(Prefix = numpypath)][0] # Probably an easier way
+    obj = resource.Object("pasture-rangeland-forage", key)
+    try:
+        with io.BytesIO(obj.get()["Body"].read()) as file:
+            # rewind the file
+            file.seek(0)
+            array = np.load(file)
+            arrays = array.f.arr_0    
+    except botocore.exceptions.ClientError as error:
+        print(error)
+
+    # get dates
+    key=[i.key for i in bucket.objects.filter(Prefix = csvpath)][0] # Probably an easier way
+    obj = resource.Object("pasture-rangeland-forage", key)
+    try:
+        with io.BytesIO(obj.get()["Body"].read()) as df:        
+            datedf = pd.read_csv(df)
+    except botocore.exceptions.ClientError as error:
+        print(error)
+        
+    arrays = [[datedf['dates'][i],arrays[i]] for i in range(len(arrays))]
+    return arrays
 ###########################################################################
 ############## Mondo, Super Important Main Function ########################
 ###########################################################################    
@@ -420,29 +464,80 @@ def indexInsurance2(indexlist,actuarial_bundle, categorypath, productivity, stri
     indexlist = [[i[0],i[1]*mask] for i in indexlist]
     indexname = indexlist[0][0][:-7]
     
-    # Set up the payment scaling ratios. There are only three for now. 
-    scalars = {"NOAA": 1,
-               "PDSI": 2.02,
-               "SPI": 1.58,
-               "SPEI": 1.98}
+    # Make some index specific adjustments
+    if "NOAA" in indexname:
+        # Need this for a subsequent step
+        key = {.9: .9,
+               .85: .85,
+               .8: .8,
+               .75: .75,
+               .7: .7} 
         
-    # Get the appropriate ratio for the current index's group
-    groupname = ''.join(c for c in indexname if c.isalpha())
-    payscalar = scalars.get(groupname)
-    
-    # Original Categories (more or less)
-    key = {.9: .9,
-           .85: .85,
-           .8: .8,
-           .75: .75,
-           .7: .7}
-    
-    if "NOAA" not in indexname:
-        strikedf = pd.read_csv(categorypath)
-        rmafield = [float(str(round(l,2))) for l in strikedf['RMA']]
-        dfield = [float(str(round(l,2))) for l in strikedf[indexname]]
-        key = dict(zip(rmafield,dfield))
+        # No Alterations
+        indexlist = indexlist
+        payscalar = 1
+        
+    else:
+        # Adjust for outliers       
+        arrays = [a[1] for a in indexlist]
+        sd = np.nanstd(arrays)
+        mean = np.nanmean(arrays)
+        thresholds = [-3*sd,3*sd]
+        for a in arrays:
+            a[a <= thresholds[0]] = thresholds[0]
+            a[a >= thresholds[1]] = thresholds[1]
+        indexlist = [[indexlist[i][0],arrays[i]] for i in range(len(indexlist))]
+        
+        # Adjust intervals
+        indexlist = adjustIntervals(indexlist)    
+        
+        # Standardize Range
+        indexlist = standardize(indexlist)      
+        
+        # Find Matching Probability for strike level - do this here instead of having to save it. 
+        keydf = pd.read_csv("G:\\My Drive\THESIS\\data\Index Project\\Index Categories\\newstrikes.csv")
+        if indexname not in list(keydf['index']):
+            # Get the noaa values       
+            noaalist = readRasters("d:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\", -9999)[0]
             
+            # Establish Strikes
+            strikes = [.7,.75,.8,.85,.9]
+            newstrikes = []
+            for i in tqdm(range(len(strikes))):
+                newstrikes.append(probMatch(indexlist,noaalist,strikes[i],plot = True))
+                
+            # Create the key
+            key = dict(zip(strikes,newstrikes))
+            
+            # Turn into dataframe
+            indexrows = np.repeat(indexname,5)
+            keydf2 = pd.DataFrame([indexrows,strikes,newstrikes]).transpose()
+            keydf2.columns = ['index','strike','newstrike']
+            
+            # Append to the main key dataframe
+            keydf = keydf.append(keydf2,ignore_index=True)
+
+            # Save for next time
+            keydf.to_csv("G:\\My Drive\THESIS\\data\Index Project\\Index Categories\\newstrikes.csv",index=False)
+        else:
+            newstrikes = keydf.ix[keydf["index"]==indexname]
+            key = dict(zip(keydf['strike'],keydf['newstrike']))
+            
+        if scale == True:
+        # Set up the payment scaling ratios.
+            scalardf = pd.read_csv("G:\\my drive\\thesis\\data\\Index Project\\index_ratios.csv")
+            scalars = dict(zip(scalardf['index'],scalardf['ratio']))
+            
+            # Get the appropriate ratio for the current index's group
+            name = ''.join([c.replace('-','').lower() for c in indexname])
+            payscalar = scalars.get(name)
+        else:
+            payscalar = 1
+    
+    
+#    # Now reduce the list to the calculation period.
+#    indexlist = [year for year in indexlist if int(year[0][-6:-2]) >= startyear and int(year[0][-6:-2]) <= endyear]
+#    
     ###########################################################################
     ############## Call the function to get array lists  ######################
     ###########################################################################
@@ -1682,7 +1777,7 @@ def readRaster(rasterpath,band,navalue = -9999):
 ###############################################################################
 ##################### Convert single raster to array ##########################
 ###############################################################################
-def readRasterAWS(rasterpath,navalue = -9999):
+def readRasterAWS(awspath,navalue = -9999):
     """
     rasterpath = path to folder containing a series of rasters
     navalue = a number (float) for nan values if we forgot 
@@ -1694,11 +1789,7 @@ def readRasterAWS(rasterpath,navalue = -9999):
       array (numpy), spatial geometry (gdal object), coordinate reference system (gdal object)
     
     """
-    if '/' in rasterpath:
-        files = ["s3://pasture-rangeland-forage/" + i.key for i in bucket.objects.filter(Prefix = rasterpath)]
-        rootlen = len(files[0])    
-        names = [files[i][rootlen:] for i in range(len(files))] 
-    with rasterio.open(files[0]) as src:
+    with rasterio.open(awspath) as src:
         array = src.read(1,window = ((0,120),(0,300)))
         geometry = src.get_transform()
         arrayref = src.get_crs()
@@ -1711,7 +1802,7 @@ def readRasterAWS(rasterpath,navalue = -9999):
 ######################## Convert multiple rasters #############################
 ####################### into numpy arrays #####################################
 ###############################################################################
-def readRasters(rasterpath,navalue = -9999):
+def readRasters(awspath,navalue = -9999):
     """
     rasterpath = path to folder containing a series of rasters
     navalue = a number (float) for nan values if we forgot 
@@ -1776,7 +1867,7 @@ def readRasters2(rasterpath,navalue = -9999):
     arrayref = sample.GetProjection()
     del sample
     start = time.clock()
-    for i in range(len(files)): 
+    for i in tqdm(range(len(files))): 
         rast = gdal.Open(files[i])
         array = np.array(rast.GetRasterBand(1).ReadAsArray())
         del rast

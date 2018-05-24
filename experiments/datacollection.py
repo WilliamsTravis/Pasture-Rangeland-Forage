@@ -20,10 +20,6 @@ indices = ['D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\',
  'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\',
  'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\',
  'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\',
-# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\',
-# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\',
-# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\',
-# 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\',
  'D:\\data\\droughtindices\\spi\\nad83\\1month\\',
  'D:\\data\\droughtindices\\spi\\nad83\\2month\\',
  'D:\\data\\droughtindices\\spi\\nad83\\3month\\',
@@ -38,10 +34,6 @@ indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'NOAA',
             'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\': 'PDSI',
           'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\': 'PDSIsc',
           'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\': 'PDSIz',
-#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\':'EDDI-1',
-#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\':'EDDI-2',
-#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\':'EDDI-3',
-#          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\':'EDDI-6',
           'D:\\data\\droughtindices\\spi\\nad83\\1month\\':'SPI-1',
           'D:\\data\\droughtindices\\spi\\nad83\\2month\\':'SPI-2',
           'D:\\data\\droughtindices\\spi\\nad83\\3month\\':'SPI-3',
@@ -94,13 +86,14 @@ totaliterations = len(indices)*len(actuarialyear)*len(baselineyears)*len(studyea
 # I am taking out the other baseline years for now. It is meaningless for anything but the rainfall index
 baselineyears = [[1948, 2017]]
 for by in baselineyears:
-    print("Choosing baslein years...")
+    print("Choosing basline years...")
     for i in indices:
         prfdf.to_csv("G:\\My Drive\\THESIS\\data\\Index Project\\PRFIndex_specs.csv")
-        print("Reading Rasters...")
+        print(i)
         indexlist = readRasters2(i,-9999)[0]
         indexlist = [[a[0],a[1]*mask] for a in indexlist]
-        indexcov = covCellwise(indexlist)
+        indexcov = c*12 # what happened here? that c is probably from the covCellwise function, but *12? 
+        ovCellwise(indexlist)
         name = indexnames.get(i)                            
         if name == "NOAA":
             indexlist = normalize(indexlist,by[0],by[1])
@@ -112,7 +105,7 @@ for by in baselineyears:
             indexlist = standardize(indexlist)
             categorypath = 'data\\Index Categories\\indexcategories-standardized.csv'
         for ay in actuarialyear:
-            print("Bundling Actuarials...")
+            print("Bundling Actuarials...Year: "+str(ay))
             if ay == 2017:
                 actuarialpath = 'data\\actuarial\\2017\\rasters\\nad83\\'
             elif ay == 2018:
@@ -128,9 +121,9 @@ for by in baselineyears:
             actuarial_bundle = [premiums,bases,allocmins,allocmaxes]
             for sy in studyears:
                 indexlist = [year for year in indexlist if int(year[0][-6:-2]) >= sy[0] and int(year[0][-6:-2]) <= sy[1]]
-                print("Choosing Study Years...")
+                print("Choosing Study Years..." + str(sy))
                 for s in strikes:
-                    print("Choosing Strike Level...")
+                    print("Choosing Strike Level..." + str(s))
                     iteration += 1 
                     print("Building Dataset...")
                     data = indexInsurance2(indexlist, actuarial_bundle, categorypath, 
@@ -165,4 +158,8 @@ for by in baselineyears:
                     prfdf = prfdf.append(rowdict,ignore_index=True)
                     print(str(iteration) + " / " + str(totaliterations) +"  |  " + str(round(iteration/totaliterations,2)*100) + "%")
 
-prfdf.to_csv("G:\\My Drive\\THESIS\\data\\Index Project\\PRFIndex_specs.csv")
+prfdf.to_csv("C:\\Users\\trwi0358\\Github\\Pasture-Rangeland-Forage\\data\\PRFIndex_specs.csv")
+prfdf_original = pd.read_csv("C:\\Users\\trwi0358\\Github\\Pasture-Rangeland-Forage\\data\\PRFIndex_specs_original.csv")
+
+prfdf = pd.read_csv("C:\\Users\\trwi0358\\Github\\Pasture-Rangeland-Forage\\data\\PRFIndex_specs.csv")
+prfdf.columns = prfdf_original.columns

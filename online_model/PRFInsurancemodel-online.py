@@ -5,7 +5,6 @@ Created on Fri Mar  9 20:01:15 2018
 @author: trwi0358
 """
 
-# In[]:
 # Import required libraries
 ############################ Get Functions ####################################
 runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py', wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage')
@@ -61,6 +60,7 @@ indices = [{'label':'NOAA','value':'noaa'},
            {'label':'SPEI-2' ,'value': 'spei2'},
            {'label':'SPEI-3' ,'value': 'spei3'},
            {'label':'SPEI-6','value': 'spei6'}]
+
 # Index names, using the paths we already have. These are for titles.
 indexnames = {'noaa': 'NOAA CPC-Derived Rainfall Index',
             'pdsi': 'Palmer Drought Severity Index',

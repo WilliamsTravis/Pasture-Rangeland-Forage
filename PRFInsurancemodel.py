@@ -56,6 +56,7 @@ indices = [{'label':'NOAA','value':'D:\\data\\droughtindices\\noaa\\nad83\\index
            {'label':'SPEI-2' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\2month\\'},
            {'label':'SPEI-3' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\3month\\'},
            {'label':'SPEI-6','value': 'D:\\data\\droughtindices\\spei\\nad83\\6month\\'}]
+
 # Index names, using the paths we already have. These are for titles.
 indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'NOAA CPC-Derived Rainfall Index',
             'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\': 'Palmer Drought Severity Index',
@@ -127,6 +128,7 @@ dfcols = [{'label':"D.I.: Drought Index", 'value': 1},
          { 'label':"M. PCF SD: Monthly Payment Calculation Factor Standard Deviation", 'value': 16},
          { 'label':"Mean P.F.: Mean Payout Frequency", 'value': 17},
          { 'label':"M.P.FSD: Monthly Payout Frequency Standard Deviation", 'value': 18}]
+
 # Create Coordinate Index - because I can't find the array position in the 
     # click event!
 xs = range(300)
@@ -137,8 +139,6 @@ londict = dict(zip(lons, xs))
 latdict = dict(zip(lats, ys))
 londict2  = {y:x for x,y in londict.items()} # This is backwards to link simplified column 
 latdict2  = {y:x for x,y in latdict.items()} # This is backwards to link simplified column 
-
-
 
 # Data Table template
 rows = [{"Index": '',
@@ -663,8 +663,9 @@ def makeTrendBar(clickData,signal,return_type):
 
     figure = dict(data=data, layout=layout_count)
     return figure
+
 ###############################################################################
-###############################################################################
+######################## Time Series ##########################################
 ###############################################################################
 @app.callback(Output('series_graph','figure'),
                [Input('main_graph','clickData'),
