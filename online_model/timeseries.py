@@ -185,9 +185,9 @@ layout = dict(
 # Create app layout
 app.layout = html.Div(
     [
-        # Title and Image
-        html.Div(# One
+             html.Div(# One
             [
+        # Title and Image
                 html.Img(
                     src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/earthlab.png?raw=true",
 #                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe.png",
@@ -198,7 +198,11 @@ app.layout = html.Div(
                         'float': 'right',
                         'position': 'static',
                     },
+                )],
+                className = 'row'
                 ),
+        html.Div(# One
+            [
                 html.H1(
                     'Index Insurance Exploratory Analysis Tool:',
                     className='eight columns',
