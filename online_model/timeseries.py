@@ -198,6 +198,17 @@ app.layout = html.Div(
                         'float': 'right',
                         'position': 'static',
                     },
+                ),
+                html.Img(
+                    src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/CU_Boulder.jpg?raw=true",
+#                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe.png",
+                    className='one columns',
+                    style={
+                        'height': '150',
+                        'width': '300',
+                        'float': 'right',
+                        'position': 'static',
+                    },
                 )],
                 className = 'row'
                 ),
