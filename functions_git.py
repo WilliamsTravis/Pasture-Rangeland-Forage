@@ -1802,7 +1802,7 @@ def readRasterAWS(awspath,navalue = -9999):
 ######################## Convert multiple rasters #############################
 ####################### into numpy arrays #####################################
 ###############################################################################
-def readRasters(awspath,navalue = -9999):
+def readRasters(rasterpath,navalue = -9999):
     """
     rasterpath = path to folder containing a series of rasters
     navalue = a number (float) for nan values if we forgot 

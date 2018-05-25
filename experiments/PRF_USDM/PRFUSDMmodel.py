@@ -10,6 +10,18 @@ The plan here is to take the weekly US Drought Monitor rasters and convert them
     Then I will take the bi-monthly RMA and calculate the number of times each
     cell recieves no payout when the drought monitor indicates drought of a 
     severity comparable to the strike level in the RMA
+    
+Things to do:
+    1) Place the Rainfall index payout triggers next to USDM DM categories
+    2) Put a tooltip to each graph
+    3) Run each parameter and store in s3 bucket
+    4) Consider a graph for each location
+    5) Weight ratio by number of PRF payout triggers
+        i) Because a signular miss does not tell us much...
+        ii) Perhaps simply multiply each ratio by the number of triggers and then
+            standardize?
+    6) Get a nation-wide figure that sums up the "basis risk" according to the USDM
+        i) average ratio (USDM pay: NOAA pay)?
 
 @author: trwi0358
 """
@@ -24,12 +36,12 @@ import warnings
 warnings.filterwarnings("ignore") 
 os.chdir("c:\\users\\trwi0358\\github\\pasture-rangeland-forage")
 source = xr.open_rasterio("d:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif")
+source_signal = '["D:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\\\\", 4, 0.7]'
 grid = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)[0]
 strike = .7
 mask = readRaster('D:\\data\\droughtindices\\masks\\nad83\\mask4.tif',1,-9999)[0]
 # Load pre-conditioned bi-monthly USDM modal category rasters into numpy arrays
 usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmeans\\",-9999)[0]
-
 
 ###############################################################################
 ############################ Create the App Object ############################
@@ -115,7 +127,7 @@ latdict = dict(zip(lats,ys))
 
 
 # Create global chart template
-mapbox_access_token = 'pk.eyJ1IjoidHJhdmlzc2l1cyIsImEiOiJjamVrc2duZXE0OWNxMndxZTJ1c3g0cDByIn0.XrtTRpRzjw0f-arNCiTpoA'
+mapbox_access_token = 'pk.eyJ1IjoidHJhdmlzc2l1cyIsImEiOiJjamZiaHh4b28waXNkMnptaWlwcHZvdzdoIn0.9pxpgXxyyhM6qEF_dcyjIQ'
 
 # Map Layout:
 layout = dict(
@@ -250,6 +262,8 @@ app.layout = html.Div(
 @cache.memoize()
 def global_store(signal):
     # Transform the argument list back to normal
+    if not signal:
+        signal = source_signal
     signal = json.loads(signal)
     
     # Unpack signals
@@ -323,7 +337,9 @@ def basisGraph(signal):
     # Get data
     df = retrieve_data(signal)
     
-    # Transform the argument list back to normal    
+    # Transform the argument list back to normal 
+    if not signal:
+        signal= source_signal
     signal = json.loads(signal)
     
     # Unpack signals
@@ -335,7 +351,7 @@ def basisGraph(signal):
     # Get desired array
     droughtchances = df[0]
     
-    # Second, convert data back into an array, but in a from xarray recognizes
+    # Second, convert data back into an array, but in a form xarray recognizes
     array = np.array([droughtchances],dtype = "float32")
     
     # Third, change the source array to this one. Source is defined up top

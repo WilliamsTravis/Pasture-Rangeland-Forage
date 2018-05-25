@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 Update to the Time series:
-    5) Use this as an example to push to the internet
+    1) Redo the time option. Instead of taking the average payout map from the original function
+        use the time series to get the average cell-wise values. 
+    2) Use this as an example to push to the internet
         a) How to access source files directly from git hub?
-        b) Use these guides for pushing to heroku
+            i) Might be easier just to get it from AWS with everything else
+        b) Use these guides for pushing to virtual private network
             i) https://dash.plot.ly/deployment
             ii) https://www.youtube.com/watch?v=tpn-5qPnrrc
+    https://github.com/plotly/dash-html-components/blob/master/scripts/data/elements.txt
 
 Created on Mon May 21 10:32:24 2018
 
@@ -13,13 +17,18 @@ Created on Mon May 21 10:32:24 2018
 """
 
 # In[]:
-############################ Get Functions ####################################
+############################ Get Functions #########################################################
 runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py',
         wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage') # Change to github
 
-################# Test with Local Drive or Online with AWS files? #############
+################# Test with Local Drive or Online with AWS files? ##################################
 test = True
 
+######################### Total Project Description ################################################
+description= open("README.txt").read()
+mapinfo = ''
+trendinfo = ''
+seriesinfo = ''
 # In[]:
 ####################################################################################################
 ############################ Create the App Object #################################################
@@ -41,12 +50,15 @@ cache.init_app(server)
 import warnings
 import io
 warnings.filterwarnings("ignore") 
-os.chdir("c:\\users\\trwi0358\\github\\pasture-rangeland-forage") # Change to github
-rasterpath = "d:\\data\\droughtindices\\noaa\\nad83\\raw\\" # Change to github
+os.chdir("c:\\users\\trwi0358\\github\\pasture-rangeland-forage") # Change to github?
 source = xr.open_rasterio("d:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif") # Change to github
+#source = xr.open_rasterio("https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/rma/prfgrid.tif")
 source_signal = '["noaa", 2018, [2000, 2017], 0.7, "indemnities"]'
 grid = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)[0]
+#grid = readRaster('https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/rma/prfgrid.tif',1,-9999)[0]
 datatable = pd.read_csv("C:\\Users\\trwi0358\\Github\\Pasture-Rangeland-Forage\\data\\PRFIndex_specs.csv").to_dict('RECORDS')
+
+#datatable = pd.read_csv("https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/PRFIndex_specs.csv").to_dict('RECORDS')
 productivity = 1
 
 
@@ -111,13 +123,28 @@ returndict = {'premiums':'Potential Producer Premiums',
                'pcfs':'Potential Payment Calculation Factors',
                'nets':'Potential Net Payouts',
                'lossratios':'Potential Loss Ratios'}
-
+trenddict = {'premiums':'Average Premium ($)',
+               'indemnities':'Average Indemnity ($)',
+               'frequencies':'Average Payout Frequency',
+               'pcfs':'Average Payment Calculation Factor',
+               'nets':'Average Net Payout ($)',
+               'lossratios':'Average Loss Ratio'}
+seriesdict = {'premiums':'Premium ($)',
+               'indemnities':'Indemnity ($)',
+               'frequencies':'Payout Frequency',
+               'pcfs':'Payment Calculation Factor',
+               'nets':'Net Payout ($)',
+               'lossratios':'Loss Ratio'}
 # Strike levels
 strikes = [{'label':'70%','value':.70},
           {'label':'75%','value':.75},
           {'label':'80%','value':.80},
           {'label':'85%','value':.85},
           {'label':'90%','value':.90}]
+
+# Year Markes for Slider
+years = [int(y) for y in range(2000,2018)]
+yearmarks =dict(zip(years,years)) 
 
 # Data Frame Column Names
 dfcols = [{'label':"D.I.: Drought Index", 'value': 1},
@@ -154,17 +181,20 @@ latdict2  = {y:x for x,y in latdict.items()} # This is backwards to link simplif
 mapbox_access_token = 'pk.eyJ1IjoidHJhdmlzc2l1cyIsImEiOiJjamZiaHh4b28waXNkMnptaWlwcHZvdzdoIn0.9pxpgXxyyhM6qEF_dcyjIQ'
 
 # Map Layout:
+# Check this out! https://paulcbauer.shinyapps.io/plotlylayout/
 layout = dict(
     autosize=True,
     height=500,
     font=dict(color='#CCCCCC'),
     titlefont=dict(color='#CCCCCC', size='20'),
     margin=dict(
-        l=35,
+        l=55,
         r=35,
         b=65,
-        t=65
+        t=65,
+        pad = 4
     ),
+    
     hovermode="closest",
     plot_bgcolor="#e6efbf",
     paper_bgcolor="#083C04",
@@ -172,7 +202,7 @@ layout = dict(
     title='<b>Potential Payout Frequencies</b>',
     mapbox=dict(
         accesstoken=mapbox_access_token,
-        style="dark",
+        style="satellite-streets",
         center=dict(
             lon= -95.7,
             lat= 37.1
@@ -193,38 +223,43 @@ app.layout = html.Div(
 #                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe.png",
                     className='one columns',
                     style={
-                        'height': '150',
-                        'width': '300',
+                        'height': '75',
+                        'width': '200',
                         'float': 'right',
                         'position': 'static',
                     },
                 ),
-                html.Img(
-                    src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/CU_Boulder.jpg?raw=true",
-#                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe.png",
-                    className='one columns',
-                    style={
-                        'height': '150',
-                        'width': '300',
-                        'float': 'right',
-                        'position': 'static',
-                    },
-                )],
+#                html.Img(
+#                    src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/CU_Boulder.jpg?raw=true",
+##                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe.png",
+#                    className='one columns',
+#                    style={
+#                        'height': '150',
+#                        'width': '300',
+#                        'float': 'right',
+#                        'position': 'static',
+#                    },
+#                )
+                ],
                 className = 'row'
                 ),
         html.Div(# One
             [
                 html.H1(
-                    'Index Insurance Exploratory Analysis Tool:',
-                    className='eight columns',
+                    'Index Insurance Exploratory Analysis Tool: Could the PRF work with a drought index?',
+                    className='twelve columns'
                 ),
-                html.H2(
-                         'The Pasture Rangeland and Forage with a drought index?',
-                         className = ' eight columns'
-                ),
+                html.Button(children = 'Project Description', 
+                            title = description,
+                            type='button'),                             
             ],
-            className='row'
+            className='row' ,
+            style = {'font-weight':'bold',
+                     'text-align':'center',
+                     'margin-top':'40',
+                     'margin-bottom':'40'}
         ),
+
         # Year Slider Text 
         html.Div(# Two
             [
@@ -253,6 +288,7 @@ app.layout = html.Div(
                     value=[2000, 2017],
                     min=2000,
                     max=2017,
+                    marks = yearmarks
                 ),
 #                html.P('Baseline Average Year Range'), 
 #                dcc.RangeSlider(
@@ -262,7 +298,8 @@ app.layout = html.Div(
 #                    max=2017
 #                ),
             ],
-            style={'margin-top': '20'}
+            style={'margin-top': '20',
+                   'margin-bottom': '40'}
         ),
             
         # Selections
@@ -395,6 +432,7 @@ app.layout = html.Div(
                         dt.DataTable(
                              rows = datatable,
                              id = "summary_table",
+                             editable=False,
                              filterable=True,
                              sortable=True,
                              row_selectable=True,
@@ -402,10 +440,12 @@ app.layout = html.Div(
                              )
                     ],
                     className='twelve columns',
-                    style={'width':'100%', 'display': 'inline-block', 'padding': '0 20'},
+                    style={'width':'100%',
+                           'display': 'inline-block', 
+                           'padding': '0 20'},
                 ),             
             ],
-            className='twelve columns'
+            className='row'
         ),
     ],
     className='ten columns offset-by-one'
@@ -451,7 +491,7 @@ def global_store(signal):
         # Get with getNPY and getNPYs
         array = getNPY(averagepath)
         arrays = getNPYs(timeseriespath,datepath)
-        arrays.append(array) # Now the average is last, call it with [-1]
+#        arrays.append(array) # Now the average is last, call it with [-1]
         df = arrays
     else:
         # Average Map
@@ -476,7 +516,7 @@ def global_store(signal):
         arrays = np.load(timeseriespath)
         arrays = arrays.f.arr_0    
         arrays = [[datedf['dates'][i],arrays[i]] for i in range(len(arrays))]
-        arrays.append(array) # Now the average is last, call it with [-1]
+#        arrays.append(array) # Now the average is last, call it with [-1]
         df = arrays
 
     return df
@@ -515,7 +555,7 @@ def compute_value(clicks,index_choice,actuarial_year,year_slider,strike_level,re
 @app.callback(Output('year_text', 'children'),
               [Input('year_slider', 'value')])
 def update_year_text(year_slider):
-    return "Study Period: {} | {} ".format(year_slider[0], year_slider[1])
+    return "Study Period: {} - {} ".format(year_slider[0], year_slider[1])
 
 # Button2 -> Map Info Text
 @app.callback(Output('map_info', 'title'),
@@ -610,14 +650,21 @@ def makeMap(signal):
     # Get data
     df = retrieve_data(signal)
     
-    # Get only the last array
-    df = df[len(df)-1]
-  
     # Get signal for labeling    
     signal = json.loads(signal)
     return_type = signal[4]
     strike_level = signal[3]
+    date1 = signal[2][0]
+    date2 = signal[2][1]
     
+#    # Filter by year range
+    df = [d for d in df if int(d[0][-6:-2]) >= date1 and int(d[0][-6:-2]) <= date2]
+#    
+    # Get only the last array - 
+#    df = df[len(df)-1]
+    df = [a[1] for a in df]
+    df = np.nanmean(df,axis = 0)
+
     # Data symbol for hover data
     if return_type == "premiums" or return_type == "indemnities" or return_type == "nets":
         datasymbol = "$"
@@ -663,7 +710,7 @@ def makeMap(signal):
         type = 'scattermapbox',
         lon = df['lonbin'],
         lat = df['latbin'],
-        text = df['grid2'],#np.round(df['data'],2),
+        text = df['grid2'],
         mode = 'markers',
         hoverinfo = 'text',
         marker = dict(
@@ -673,9 +720,9 @@ def makeMap(signal):
             cmax = 25000,#df['data'].max(),
             opacity=0.85,
             colorbar=dict(  
-                title=returndict.get(return_type),
                 textposition = "auto",
-                orientation = "h"
+                orientation = "h",
+                font = dict(size = 15)
                 )
             )
         ), # This will be for a point to be placed on the map, lot's of things to do that
@@ -698,7 +745,10 @@ def makeMap(signal):
         calc = "Sum "
     else:
         calc = "Average "
-    layout['title'] = "<b>" +indexnames.get(signal[0]) +"<br>" +calc+returndict.get(return_type)+"  |  " +str(signal[2][0]) + " to " + str(signal[2][1])+ "  |  " + str(int(strike_level*100)) + "% Strike Level</b>"
+        
+    layout['title'] = ("<b>" +indexnames.get(signal[0]) +"<br>" +calc+returndict.get(return_type)
+                        +"  |  " +str(signal[2][0]) + " to " + str(signal[2][1])+ "  |  " 
+                        + str(int(strike_level*100)) + "% Strike Level</b>")
 #                
     # Seventh wrap the data and layout into one
     figure = dict(data=data, layout=layout)
@@ -727,30 +777,25 @@ def makeTrendBar(clickData,signal):
         y = latdict.get(clickData['points'][0]['lat'])
         targetid  = grid[y,x]
  
-    # Get data
-    # arrays
+    # Get signal for labeling
     if not signal:
         signal = source_signal
     df = retrieve_data(signal)
     signal = json.loads(signal)
-
-    # Knock of the average array
-    df = df[:-1]
-    
-    # Get signal for labeling
     return_type = signal[4]
+    date1 = signal[2][0]
+    date2 = signal[2][1]
     
+#    # Filter by year range
+    df = [d for d in df if int(d[0][-6:-2]) >= date1 and int(d[0][-6:-2]) <= date2]
+
     # Catch the target grid cell
     index = np.where(grid == targetid)
     
     # Create the time series of data at that gridcell
     timeseries = [[item[0],item[1][index]] for item in df]
-    
-    # For title
-    dates = [int(item[0][-6:-2]) for item in timeseries]
-    date1 = str(min(dates)) 
-    date2 = str(max(dates))
-    
+    dates = [int(item[0][-6:-2]) for item in df]
+
     # For the x axis and value matching
     intervals = [format(int(interval),'02d') for interval in range(1,12)]
     months = {1:'Jan-Feb',
@@ -769,7 +814,6 @@ def makeTrendBar(clickData,signal):
     valuelist = [[series[1] for series in timeseries if series[0][-2:] ==  interval] for interval in intervals]
     
     # In tuple form for the bar chart
-    # if return_type = frequencies (8) - use the summation instead of mean
     if return_type == 'frequencies':
         averages =  tuple(np.asarray([np.sum(sublist) for sublist in valuelist]))
         calc = "Sums "
@@ -814,6 +858,7 @@ def makeTrendBar(clickData,signal):
     ]
     if max(averages) < 15000:
         yaxis = dict(
+                title = trenddict.get(return_type),
                 autorange=False,
                 range=[0, 15000],
                 type='linear'
@@ -829,6 +874,7 @@ def makeTrendBar(clickData,signal):
         )
     else:
         yaxis = dict(
+                title = trenddict.get(return_type),
                 autorange = True,
                 type = 'linear'
                 )
@@ -845,14 +891,16 @@ def makeTrendBar(clickData,signal):
         
     
     layout_count['title'] = ("<b>" +returndict.get(return_type)
-                             + ' Monthly Trends: '+calc + '<br> Grid ID: '
+                             + ' Monthly Trends <br> Grid ID: '
                              + str(int(targetid)) + "</b>")
     layout_count['dragmode'] = 'select'
     layout_count['showlegend'] = False 
     layout_count['annotations'] = [annotation]
-    layout_count['xaxis'] = dict(tickvals = x, ticktext = intlabels)
+    layout_count['xaxis'] = dict(title= "Insurance Interval",tickvals = x, ticktext = intlabels,
+                                tickangle = 45)
     layout_count['yaxis'] = yaxis
-    figure = dict(data=data, layout=layout_count)
+    layout_count['margin'] =   dict(l=60, r=35, b=75,t=65, pad = 4)
+    figure = dict(data=data, layout=layout_count )
     return figure
 
 # In[]
@@ -887,15 +935,17 @@ def makeSeries(clickData,signal):
     signal = json.loads(signal)
     return_type = signal[4]
     return_label = returndict.get(return_type)
+    date1 = signal[2][0]
+    date2 = signal[2][1]
     
-    # Knock the average map off
-    df = df[:-1]
+    #    # Filter by year range
+    df = [d for d in df if int(d[0][-6:-2]) >= date1 and int(d[0][-6:-2]) <= date2]
     
     # For title
     dates = [item[0][-6:-2]+"-"+ item[0][-2:] for item in df]
     intervals = [int(d[-2:]) for d in dates]
-    dates1 = str(min(dates)) 
-    dates2 = str(max(dates))
+
+    xlabels = [y for y in range(date1,date2+1)]
             
     # Catch the target grid cell
     index = np.where(grid == targetid)
@@ -956,6 +1006,7 @@ def makeSeries(clickData,signal):
     
     if max(values) < 45000:
         yaxis = dict(
+                title = seriesdict.get(return_type),
                 autorange=False,
                 range=[0, 45000],
                 type='linear'
@@ -972,6 +1023,7 @@ def makeSeries(clickData,signal):
         )
     else:
         yaxis = dict(
+                title = seriesdict.get(return_type),
                 autorange = True,
                 type = 'linear'
                 )
@@ -991,6 +1043,9 @@ def makeSeries(clickData,signal):
     layout_count['showlegend'] = False
     layout_count['annotations'] = [annotation]
     layout_count['yaxis'] = yaxis
+    layout_count['xaxis'] = dict(title= "Year",tickvals = xlabels, ticktext =xlabels, tickangle = 45 )
+
+    
     
     figure = dict(data=data, layout=layout_count)
         
