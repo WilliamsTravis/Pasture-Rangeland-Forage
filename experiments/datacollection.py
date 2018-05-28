@@ -84,7 +84,7 @@ iteration = len(prfdf.index)
 totaliterations = len(indices)*len(actuarialyear)*len(baselineyears)*len(studyears)*len(strikes)
 
 # I am taking out the other baseline years for now. It is meaningless for anything but the rainfall index
-baselineyears = [[1948, 2017]]
+baselineyears = [[2014, 2017]]
 for by in baselineyears:
     print("Choosing basline years...")
     for i in indices:
@@ -92,8 +92,7 @@ for by in baselineyears:
         print(i)
         indexlist = readRasters2(i,-9999)[0]
         indexlist = [[a[0],a[1]*mask] for a in indexlist]
-        indexcov = c*12 # what happened here? that c is probably from the covCellwise function, but *12? 
-        ovCellwise(indexlist)
+        indexcov = covCellwise(indexlist) # what happened here? that c is probably from the covCellwise function, but *12? 
         name = indexnames.get(i)                            
         if name == "NOAA":
             indexlist = normalize(indexlist,by[0],by[1])

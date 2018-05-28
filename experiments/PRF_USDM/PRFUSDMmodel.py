@@ -6,7 +6,7 @@ Basis Risk of PRF payouts by conditional probability with the USDM
 
 
 The plan here is to take the weekly US Drought Monitor rasters and convert them
-    into bi-monthyl values. I think I may use the weekly mode to start. 
+    into bi-monthly values. I think I may use the weekly mode to start. 
     Then I will take the bi-monthly RMA and calculate the number of times each
     cell recieves no payout when the drought monitor indicates drought of a 
     severity comparable to the strike level in the RMA
@@ -30,18 +30,23 @@ Things to do:
 # In[]:
 # Import required libraries
 ############################ Get Functions ####################################
-runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py', wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage')
+runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py', 
+        wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage')
+
 ############################ Get Payout Rasters ###############################
 import warnings
 warnings.filterwarnings("ignore") 
 os.chdir("c:\\users\\trwi0358\\github\\pasture-rangeland-forage")
 source = xr.open_rasterio("d:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif")
-source_signal = '["D:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\\\\", 4, 0.7]'
+source_signal = '["D:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\\\\", 4, 0.7,100]'
 grid = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)[0]
 strike = .7
 mask = readRaster('D:\\data\\droughtindices\\masks\\nad83\\mask4.tif',1,-9999)[0]
 # Load pre-conditioned bi-monthly USDM modal category rasters into numpy arrays
-usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmeans\\",-9999)[0]
+#usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmeans\\",-9999)[0]
+usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmodes\\",-9999)[0]
+statefps = pd.read_csv("data\\statefps.csv")
+states = readRaster("data\\usacontiguous.tif",1,-9999)[0] 
 
 ###############################################################################
 ############################ Create the App Object ############################
@@ -62,25 +67,26 @@ cache.init_app(server)
 ############################ Create Lists and Dictionaries ####################
 ###############################################################################
 # Index Paths
-indices = [{'label':'RMA','value':'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\'},
-           {'label':'PDSI','value':'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'},
-           {'label':'PDSI-Self Calibrated','value':'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\'},
-           {'label':'Palmer Z Index','value':'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\'},
-           {'label':'EDDI-1','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\'},
-           {'label':'EDDI-2','value': 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\'},
-           {'label':'EDDI-3','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\'},
-           {'label':'EDDI-6','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\'},
-           {'label':'SPI-1' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\1month\\'},
-           {'label':'SPI-2' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\2month\\'},
-           {'label':'SPI-3' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\3month\\'},
-           {'label':'SPI-6' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\6month\\'},
-           {'label':'SPEI-1' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\1month\\'},
-           {'label':'SPEI-2' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\2month\\'},
-           {'label':'SPEI-3' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\3month\\'},
-           {'label':'SPEI-6','value': 'D:\\data\\droughtindices\\spei\\nad83\\6month\\'}]
+indices = [{'label':'Rainfall Index','value':'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\'},
+#           {'label':'PDSI','value':'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'},
+#           {'label':'PDSI-Self Calibrated','value':'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\'},
+#           {'label':'Palmer Z Index','value':'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\'},
+#           {'label':'EDDI-1','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\'},
+#           {'label':'EDDI-2','value': 'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\'},
+#           {'label':'EDDI-3','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\'},
+#           {'label':'EDDI-6','value':'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\'},
+#           {'label':'SPI-1' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\1month\\'},
+#           {'label':'SPI-2' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\2month\\'},
+#           {'label':'SPI-3' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\3month\\'},
+#           {'label':'SPI-6' ,'value': 'D:\\data\\droughtindices\\spi\\nad83\\6month\\'},
+#           {'label':'SPEI-1' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\1month\\'},
+#           {'label':'SPEI-2' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\2month\\'},
+#           {'label':'SPEI-3' ,'value': 'D:\\data\\droughtindices\\spei\\nad83\\3month\\'},
+#           {'label':'SPEI-6','value': 'D:\\data\\droughtindices\\spei\\nad83\\6month\\'}
+           ]
 
 # Index names, using the paths we already have. These are for titles.
-indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'Risk Management Agency Rainfall Index',
+indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'Rainfall Index',
             'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\': 'Palmer Drought Severity Index',
           'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\': 'Self-Calibrated Palmer Drought Severity Index',
           'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\': 'Palmer Z Index',
@@ -97,6 +103,31 @@ indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'Risk Mana
           'D:\\data\\droughtindices\\spei\\nad83\\3month\\': 'Standardized Precipitation-Evapotranspiration Index - 3 month', 
           'D:\\data\\droughtindices\\spei\\nad83\\6month\\': 'Standardized Precipitation-Evapotranspiration Index - 6 month'}
 
+# State options
+statefps = statefps.sort_values('state')
+statefps = statefps.reset_index()
+stateoptions = [{'label':statefps['state'][i],'value':statefps['statefp'][i]} for i in range(len(statefps['state']))]
+stateoptions.insert(0,{'label':'All','value':100})
+stateoptions.remove({'label':'District of Columbia','value':8})
+
+# Data Summary
+datatable = pd.read_csv("data\\state_risks.csv",index_col=0)
+datatable = datatable.dropna()
+datatable = datatable[datatable.state != 'District of Columbia'].to_dict('RECORDS')
+#datatable = datatable.replace(np.nan,"NAN")
+columnkey = [{'label':'Strike:                  Rainfall Index Strike Level','value': 1},
+             {'label':'DM Category:             Drought Monitor Drought Severity Category','value': 2},
+             {'label':'Missed (sum):            Total Number of times the rainfall index would not have paid given the chosen US Drought Monitor Severity Category','value': 3},
+             {'label':'Missed (ratio):          Ratio between the number of times the USDM reached the chosen drought category and the numbers of time rainfall index would not have paid','value': 4},
+             {'label':'Rainfall Strikes:        Number of times the rainfall index fell below the strike level','value': 5},
+             {'label':'DM Category Events:      Number of times the USDM reached the chosen category','value': 6}]
+
+#datatable  = datatable.drop(columns = 'Index')
+#
+#datatable=datatable.replace(None, np.nan, regex=True)
+#datatable.to_csv("data\\state_risks.csv",index = False)
+#
+
 # Strike levels
 strikes = [{'label':'70%','value':.70},
           {'label':'75%','value':.75},
@@ -112,19 +143,27 @@ DMs = [{'label':'D4','value':4},
        
           
 DMlabels = {0:'D0',
-          1:'D1',
-          2:'D2',
-          3:'D3',
-          4:'D4'}
-# Create Coordinate Index - because I can't find the array position in the 
+            1:'D1',
+            2:'D2',
+            3:'D3',
+            4:'D4'}
+
+## Create Coordinate Index - because I can't find the array position in the 
     # click event!
 xs = range(300)
 ys = range(120)
-lons = [-129.75 + .25*x for x in range(0,300)]
+lons = [-130 + .25*x for x in range(0,300)]
 lats = [49.75 - .25*x for x in range(0,120)]
 londict = dict(zip(lons, xs))
-latdict = dict(zip(lats,ys))
+latdict = dict(zip(lats, ys))
+londict2  = {y:x for x,y in londict.items()} # This is backwards to link simplified column 
+latdict2  = {y:x for x,y in latdict.items()} # This is backwards to link simplified column 
 
+# Descriptions 
+raininfo = "The number of times the rainfall index fell below the chosen strike level."
+dminfo = "The number of times the Drought Monitor reached the chosen drought severity category."
+countinfo = ("The number of times the Drought Monitor reached or exceeded the chosen drought severity category and the rainfall index did not fall below the chosen strike level.")
+ratioinfo = ("The ratio between the number of times the rainfall index at the chosen strike level would not have paid during a drought according to the chosen drought severity category and the number of times that category category was met or exceeded.")
 
 # Create global chart template
 mapbox_access_token = 'pk.eyJ1IjoidHJhdmlzc2l1cyIsImEiOiJjamZiaHh4b28waXNkMnptaWlwcHZvdzdoIn0.9pxpgXxyyhM6qEF_dcyjIQ'
@@ -157,7 +196,6 @@ layout = dict(
     )
 )
 
-
 # In[]:
 # Create app layout
 app.layout = html.Div(
@@ -165,11 +203,11 @@ app.layout = html.Div(
         html.Div(# One
             [
                 html.H1(
-                    'Pasture Rangeland and Forage - USDM Basis Risk Check',
+                    'PRF - US Drought Monitor Basis Check',
                     className='eight columns',
                 ),
                 html.Img(
-                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe.png",
+                    src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/earthlab.png?raw=true",
                     className='one columns',
                     style={
                         'height': '100',
@@ -190,10 +228,20 @@ app.layout = html.Div(
                             id = 'index_choice',
                             options = indices,
                             multi = False,
-                            value = "D:\\data\\droughtindices\\noaa\\nad83\\raw\\"#'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
+                            value = "D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\"#'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
                         ),
+                        html.P("Filter by State"),
+                        dcc.Dropdown(
+                                id = "state_choice",
+                                options = stateoptions,
+                                value = 100,
+                                multi = True,
+                                searchable = True
+                                ),
+                        html.Button(id='submit', type='submit', n_clicks = 0, children='submit')
                     ],
-                    className='six columns'
+                    className='six columns',
+                    style = {'margin-top':'20'},
                 ),
                 html.Div(# Four-a
                     [
@@ -202,6 +250,7 @@ app.layout = html.Div(
                             id='strike_level',
                             options=strikes,
                             value=.75,
+                           
                             labelStyle={'display': 'inline-block'}
                         ),                        
                         html.P('USDM Category'),
@@ -212,7 +261,9 @@ app.layout = html.Div(
                             labelStyle={'display': 'inline-block'}
                         ),
                     ],
-                    className='six columns'
+                    className='six columns',
+                    style = {'margin-top':'20'},
+
                 ),
                ],
                 className = 'row'
@@ -221,16 +272,22 @@ app.layout = html.Div(
             [
                 html.Div(#Six-a
                     [
-                        dcc.Graph(id='main_graph')
+                        dcc.Graph(id='rain_graph'),
+                        html.Button(title = raininfo,
+                                    type='button', 
+                                    children='Map Info \uFE56 (Hover)'),
                     ],
-                    className='eight columns',
+                    className='six columns',
                     style={'margin-top': '10'}
                 ),
                 html.Div(#Six-a
                     [
-                        dcc.Graph(id='drought_graph')
+                        dcc.Graph(id='drought_graph'),
+                        html.Button(title = dminfo,
+                                    type='button', 
+                                    children='Map Info \uFE56 (Hover)'),
                     ],
-                    className='four columns',
+                    className='six columns',
                     style={'margin-top': '10'}
                 ),
 #                
@@ -242,11 +299,51 @@ app.layout = html.Div(
             [
                 html.Div(#Six-a
                     [
-                        dcc.Graph(id='hit_graph')
+                        dcc.Graph(id='hit_graph'),
+                        html.Button(title = countinfo,
+                                    type='button', 
+                                    children='Map Info \uFE56 (Hover)'),
                     ],
-                    className='four columns',
+                    className='six columns',
                     style={'margin-top': '10'}
-                ),                
+                ),
+                html.Div(#Six-a
+                    [
+                        dcc.Graph(id='basis_graph'),
+                        html.Button(title = ratioinfo,
+                                    type='button', 
+                                    children='Map Info \uFE56 (Hover)'),
+                    ],
+                    className='six columns',
+                    style={'margin-top': '10'}
+                ),                 
+            ],
+            className='row'
+        ),
+        # Data Table
+         html.Div(#Seven
+            [
+                html.Div(
+                    [   html.H1(" "),                      
+                        html.H4('Summary Statistics'),
+                        html.H5("Column Key"),
+                        dcc.Dropdown(options = columnkey,
+                                     placeholder = "Column Name: Description"),
+                        dt.DataTable(
+                             rows = datatable,
+                             id = "summary_table",
+                             editable=False,
+                             filterable=True,
+                             sortable=True,
+                             row_selectable=True,
+#                             min_width = 1655,
+                             )
+                    ],
+                    className='twelve columns',
+                    style={'width':'100%',
+                           'display': 'inline-block', 
+                           'padding': '0 20'},
+                ),             
             ],
             className='row'
         ),
@@ -262,18 +359,25 @@ app.layout = html.Div(
 @cache.memoize()
 def global_store(signal):
     # Transform the argument list back to normal
-    if not signal:
-        signal = source_signal
+#    if not signal:
+#        signal = source_signal
     signal = json.loads(signal)
     
     # Unpack signals
     index_choice = signal[0]
     usdm_level = signal[1]
     strike_level = signal[2]
+    statefilter = signal[3]
+    print("####################" + str(statefilter))
+    if type(statefilter) != list:
+        statefilter2 = []
+        statefilter2.append(statefilter)
+        statefilter = statefilter2
+        
    
-    # Get the index to compare to usdm
+#    # Get the index to compare to usdm
     indexlist, geom, proj = readRasters2(index_choice,-9999)
-
+#    
     # Now, to check both against each other, but first, match times
     udates = [m[0][-6:] for m in usdmodes]
     indexlist = [i for i in indexlist if i[0][-6:] in udates]
@@ -281,7 +385,8 @@ def global_store(signal):
     usdms = [u for u in usdmodes if u[0][-6:] in idates]
     
     # Create a list of monthly arrays with 1's for the scenario
-    risks = [basisCheck(usdm = usdms[i],noaa = indexlist[i],strike = strike_level, dm = usdm_level) for i in range(len(usdms))]
+    risks = [basisCheck(usdm = usdms[i],noaa = indexlist[i],
+                        strike = strike_level, dm = usdm_level) for i in range(len(usdms))]
     
     # Sum them up
     hits = np.nansum(risks,axis = 0)*mask
@@ -290,15 +395,43 @@ def global_store(signal):
     # Create a list of monthly arrays with 1's for droughts
     droughts = [droughtCheck(usdm = usdmodes[i],dm = usdm_level) for i in range(len(usdmodes))]
 #    droughtchances[droughtchances == 0] = 1000
+    rainbelow = [droughtCheck2(rain = indexlist[i],strike = strike_level) for i in range(len(indexlist))]
 
     # Sum and divide by time steps
     droughtchances = np.nansum(droughts,axis = 0)*mask
+    rainchance = np.nansum(rainbelow,axis = 0)*mask
     
     # Final Basis risk according to the USDM and Muneepeerakul et als method
     basisrisk = hits/droughtchances
     
+#     Filter if a state or states were selected
+    if str(type(statefilter)) + str(statefilter) == "<class 'list'>[100]":
+        statemask = np.copy(states)
+        statemask = statemask*0+1
+        typeof = str(type(statefilter)) + str(statefilter)
+    
+    
+    elif "," not in str(statefilter):
+        statemask = np.copy(states)
+        statelocs = np.where(statemask ==  statefilter)
+        statemask[statelocs] = 999
+        statemask[statemask < 999] = np.nan
+        statemask = statemask*0+1
+        typeof = str(type(statefilter)) + str(statefilter)
+    else:
+        print("!")
+        statemask = np.copy(states)
+        statelocs = [np.where(statemask==f) for f in statefilter]
+        statelocs1 = np.concatenate([statelocs[i][0]for i in range(len(statelocs))])
+        statelocs2 = np.concatenate([statelocs[i][1] for i in range(len(statelocs))])
+        statelocs = [statelocs1,statelocs2]
+        statemask[statelocs] = 999
+        statemask[statemask < 999] = np.nan
+        statemask = statemask*0+1
+        typeof = str(type(statefilter)) + str(statefilter)
+    
     # Package Returns for later
-    df = [basisrisk, droughtchances,hits]
+    df = [basisrisk*statemask, droughtchances*statemask,hits*statemask,rainchance*statemask]
     
     return df
         
@@ -308,25 +441,25 @@ def retrieve_data(signal):
 
 # Store the data in the cache and hide the signal to activate it in the hidden div
 @app.callback(Output('signal', 'children'), 
-              [Input('index_choice','value'),
-               Input('usdm_level','value'),
-               Input('strike_level','value')])
-def compute_value(index_choice,usdm_level,strike_level):
+              [Input('submit','n_clicks')],
+              [State('index_choice','value'),
+               State('usdm_level','value'),
+               State('strike_level','value'),
+               State('state_choice','value')])
+def compute_value(click,index_choice,usdm_level,strike_level,state_choice):
     # Package the function arguments
-    signal = json.dumps([index_choice,usdm_level,strike_level])
+    signal = json.dumps([index_choice,usdm_level,strike_level,state_choice])
     
     # compute value and send a signal when done
     global_store(signal)
     return signal
 
-############################################################################### 
-######################### Create Callbacks #################################### 
-############################################################################### 
 
+# In[]:
 ###############################################################################
 ######################### Graph Builders ######################################
 ###############################################################################
-@app.callback(Output('main_graph', 'figure'),
+@app.callback(Output('basis_graph', 'figure'),
               [Input('signal','children')])
 def basisGraph(signal):
     """
@@ -336,20 +469,22 @@ def basisGraph(signal):
     
     # Get data
     df = retrieve_data(signal)
-    
+    [basisrisk, droughtchances, hits, rainchance] = df
+
     # Transform the argument list back to normal 
-    if not signal:
-        signal= source_signal
+#    if not signal:
+#        signal= source_signal
     signal = json.loads(signal)
     
     # Unpack signals
     index_choice = signal[0]
     usdm_level = signal[1]
     strike_level = signal[2]
-    
-    
+    statefilter = signal[3]
+    typeof = str(type(statefilter))
+
     # Get desired array
-    droughtchances = df[0]
+    droughtchances = df[0]#*statemask
     
     # Second, convert data back into an array, but in a form xarray recognizes
     array = np.array([droughtchances],dtype = "float32")
@@ -364,6 +499,16 @@ def basisGraph(signal):
     to_bin = lambda x: np.floor(x / step) * step
     pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
     pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
+    pdf['gridx']= pdf['lonbin'].map(londict)  
+    pdf['gridy']= pdf['latbin'].map(latdict)  
+    grid2 = np.copy(grid)
+    grid2[np.isnan(grid2)] = 0
+    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
+    pdf['grid'] = pdf['grid'].apply(int)
+    pdf['grid'] = pdf['grid'].apply(str)
+    pdf['printdata1'] = "Grid ID#: "
+    pdf['printdata'] =  "<br>    Data: "
+    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(np.round,decimals = 4).apply(str)
     groups = pdf.groupby(("latbin", "lonbin"))
     df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
     df= df_flat[np.isfinite(df_flat['data'])]
@@ -380,7 +525,7 @@ def basisGraph(signal):
 #        locationmode = 'USA-states',
         lon = df['lonbin'],
         lat = df['latbin'],
-        text = np.round(df['data'],2),
+        text = df['grid2'],
         mode = 'markers',
         marker = dict(
             colorscale = colorscale,
@@ -395,10 +540,15 @@ def basisGraph(signal):
                 )
             )
         )]
-            
-    layout['title'] = indexnames.get(index_choice) + " Risk According to <br>" + DMlabels.get(usdm_level) +" USDM Severity"
-               
-    # Seventh wrap the data and layout into one
+    
+    # Return order to help with average value: 
+    average = str(round(np.nanmean(basisrisk),4))
+    layout['title'] = ("%"+str(int(strike_level*100))
+                        +" Rainfall Index | Risk Ratio by "
+                        + DMlabels.get(usdm_level) +"+ USDM Severity<br> Average: "
+                        + average)
+#    layout['title'] = typeof
+#     Seventh wrap the data and layout into one
     figure = dict(data=data, layout=layout)
 #    return {'figure':figure,'info': index_package_all}
     return figure
@@ -442,6 +592,16 @@ def droughtGraph(signal):
     to_bin = lambda x: np.floor(x / step) * step
     pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
     pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
+    pdf['gridx']= pdf['lonbin'].map(londict)  
+    pdf['gridy']= pdf['latbin'].map(latdict)  
+    grid2 = np.copy(grid)
+    grid2[np.isnan(grid2)] = 0
+    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
+    pdf['grid'] = pdf['grid'].apply(int)
+    pdf['grid'] = pdf['grid'].apply(str)
+    pdf['printdata1'] = "Grid ID#: "
+    pdf['printdata'] =  "<br>    Data: "
+    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(str)
     groups = pdf.groupby(("latbin", "lonbin"))
     df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
     df= df_flat[np.isfinite(df_flat['data'])]
@@ -458,7 +618,7 @@ def droughtGraph(signal):
 #        locationmode = 'USA-states',
         lon = df['lonbin'],
         lat = df['latbin'],
-        text = np.round(df['data'],2),
+        text = df['grid2'],
         mode = 'markers',
         marker = dict(
             colorscale = colorscale,
@@ -474,7 +634,7 @@ def droughtGraph(signal):
             )
         )]
             
-    layout['title'] = "USDM Category " + DMlabels.get(usdm_level) +" Frequency"
+    layout['title'] = "USDM | Category " + DMlabels.get(usdm_level) +"+ Frequency"
     layout['mapbox']['zoom'] = 2 
     
     # Seventh wrap the data and layout into one
@@ -484,7 +644,7 @@ def droughtGraph(signal):
 
 
 
-
+# In[]:
 @app.callback(Output('hit_graph', 'figure'),
               [Input('signal','children')])
 def droughtGraph(signal):
@@ -521,10 +681,20 @@ def droughtGraph(signal):
     to_bin = lambda x: np.floor(x / step) * step
     pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
     pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
+    pdf['gridx']= pdf['lonbin'].map(londict)  
+    pdf['gridy']= pdf['latbin'].map(latdict)  
+    grid2 = np.copy(grid)
+    grid2[np.isnan(grid2)] = 0
+    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
+    pdf['grid'] = pdf['grid'].apply(int)
+    pdf['grid'] = pdf['grid'].apply(str)
+    pdf['printdata1'] = "Grid ID#: "
+    pdf['printdata'] =  "<br>    Data: "
+    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(str)
+
     groups = pdf.groupby(("latbin", "lonbin"))
     df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
     df= df_flat[np.isfinite(df_flat['data'])]
-    
     # Add Grid IDs
     colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
                     [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
@@ -537,7 +707,7 @@ def droughtGraph(signal):
 #        locationmode = 'USA-states',
         lon = df['lonbin'],
         lat = df['latbin'],
-        text = np.round(df['data'],2),
+        text = df['grid2'],
         mode = 'markers',
         marker = dict(
             colorscale = colorscale,
@@ -553,16 +723,110 @@ def droughtGraph(signal):
             )
         )]
             
-    layout['title'] = indexnames.get(index_choice) + "<br> Didn't Pay | USDM Indicated Drought"
+    layout['title'] = "%"+str(int(strike_level*100)) +" Rainfall Index Would Not Pay | USDM Indicated " +  DMlabels.get(usdm_level) + "+ Drought"
     layout['mapbox']['zoom'] = 2
     # Seventh wrap the data and layout into one
     figure = dict(data=data, layout=layout)
 #    return {'figure':figure,'info': index_package_all}
     return figure
+
+# In[]:
+@app.callback(Output('rain_graph', 'figure'),
+              [Input('signal','children')])
+def droughtGraph(signal):
+    """
+    This will be a map of PRF Payout frequencies at the chosen strike level
+    """     
+    
+    # Get data
+    if not signal:
+        signal = source_signal
+    df = retrieve_data(signal)
+    
+    # Transform the argument list back to normal    
+    signal = json.loads(signal)
+    
+    # Unpack signals
+    index_choice = signal[0]
+    usdm_level = signal[1]
+    strike_level = signal[2]
+    
+    
+    # Get desired array
+    payouts = df[3]
+    
+    # Second, convert data back into an array, but in a from xarray recognizes
+    array = np.array([payouts],dtype = "float32")
+    
+    # Third, change the source array to this one. Source is defined up top
+    source.data = array
+    
+    # Fourth, bin the values into lat, long points for the dataframe
+    dfs = xr.DataArray(source, name = "data")
+    pdf = dfs.to_dataframe()
+    step = .25
+    to_bin = lambda x: np.floor(x / step) * step
+#    pdf['data'] = pdf['data'].fillna(999)
+#    pdf['data'] = pdf['data'].astype(int)
+#    pdf['data'] = pdf['data'].astype(str)
+#    pdf['data'] = pdf['data'].replace('-1', np.nan)
+    pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
+    pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
+    pdf['gridx']= pdf['lonbin'].map(londict)  
+    pdf['gridy']= pdf['latbin'].map(latdict)  
+    grid2 = np.copy(grid)
+    grid2[np.isnan(grid2)] = 0
+    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
+    pdf['grid'] = pdf['grid'].apply(int)
+    pdf['grid'] = pdf['grid'].apply(str)
+    pdf['printdata1'] = "Grid ID#: "
+    pdf['printdata'] =  "<br>    Data: "
+    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(str)
+    groups = pdf.groupby(("latbin", "lonbin"))
+    df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
+
+    df= df_flat[np.isfinite(df_flat['data'])]
+
+    
+    # Add Grid IDs
+    colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
+                    [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
+                    [0.7, 'rgb(249, 210, 41)'], [1.0, 'rgb(255, 249, 0)']] # Make darker
+    
+# Create the scattermapbox object
+    data = [ 
+        dict(
+        type = 'scattermapbox',
+#        locationmode = 'USA-states',
+        lon = df['lonbin'],
+        lat = df['latbin'],
+        text = df['grid2'],
+        mode = 'markers',
+        marker = dict(
+            colorscale = colorscale,
+            cmin = 0,
+            color = df['data'],
+            cmax = df['data'].max(),
+            opacity=0.85,
+            colorbar=dict(  
+                title= "Frequency",
+                textposition = "auto",
+                orientation = "h"
+                )
+            )
+        )]
+            
+    layout['title'] = " Rainfall Index | Sub %" + str(int(strike_level*100)) + " Frequency"
+    layout['mapbox']['zoom'] = 2
+    # Seventh wrap the data and layout into one
+    figure = dict(data=data, layout=layout)
+#    return {'figure':figure,'info': index_package_all}
+    return figure
+
 # In[]:
 # Main
 if __name__ == '__main__':
-    app.server.run(use_reloader = False)#debug=True, threaded=True
+    app.server.run(debug=True,use_reloader = False)# threaded=True
 
 
 

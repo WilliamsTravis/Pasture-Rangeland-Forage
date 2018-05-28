@@ -225,6 +225,23 @@ def droughtCheck(usdm,dm):
     drought[drought == 6] = 1
 
     return drought
+
+def droughtCheck2(rain,strike):
+    '''
+    Check how many cells in a single month were at or above the dm level
+    '''
+    # Get just the array
+    if len(rain) == 2:
+        date = rain[0][-6:]
+        rain = rain[1]
+
+    # Get cells at or above dm level drought
+    drought = np.copy(rain)
+    drought[drought <= strike] = -9999
+    drought[drought > -9999] = 0
+    drought[drought == -9999] = 1
+
+    return drought
 ###########################################################################
 ##################### Quick Histograms ####################################
 ###########################################################################    
