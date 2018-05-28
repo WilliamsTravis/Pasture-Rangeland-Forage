@@ -614,6 +614,8 @@ def update_year_text(year_slider):
 @app.callback(Output('description', 'children'),
               [Input('description_button', 'n_clicks')])
 def toggleDescription(click):
+    if not click:
+        click = 0
     if click%2 == 0:
         description = description_text
     else:
@@ -781,7 +783,8 @@ def makeMap(signal):
             cmin = 0,
             color = df['data'],
             cmax = 25000,#df['data'].max(),
-            opacity=0.85,
+            opacity=0.85,        
+            size = 5,
             colorbar=dict(  
                 textposition = "auto",
                 orientation = "h",
