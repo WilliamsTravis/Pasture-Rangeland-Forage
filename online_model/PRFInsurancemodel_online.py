@@ -18,12 +18,29 @@ Created on Mon May 21 10:32:24 2018
 
 # In[]:
 ############################ Get Functions #########################################################
-runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py',
-        wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage') # Change to github
-
+runfile('C:/Users/User/github/Pasture-Rangeland-Forage/functions_git.py', wdir='C:/Users/User/github/Pasture-Rangeland-Forage')
 ################# Test with Local Drive or Online with AWS files? ##################################
-test = False
+test = True
 
+# In[]:
+############################ Set up initial Signal #################################################
+import warnings
+import io
+import gc
+warnings.filterwarnings("ignore") 
+os.chdir("c:\\users\\user\\github\\pasture-rangeland-forage") # Change to github?
+source = xr.open_rasterio("e:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif") # Change to github
+#source = xr.open_rasterio("https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/rma/prfgrid.tif")
+source_signal = '["noaa", 2018, [2000, 2017], 0.7, "indemnities"]'
+grid = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)[0]
+#grid = readRaster('https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/rma/prfgrid.tif',1,-9999)[0]
+datatable = pd.read_csv("C:\\Users\\user\\Github\\Pasture-Rangeland-Forage\\data\\PRFIndex_specs.csv").to_dict('RECORDS')
+
+#datatable = pd.read_csv("https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/PRFIndex_specs.csv").to_dict('RECORDS')
+productivity = 1
+
+# Enable automatic garbage collection
+#gc.enable()
 ######################### Total Project Description ################################################
 #description= open("README.txt").read()
 description_text = '''
@@ -86,21 +103,6 @@ CORS(server)
 cache = Cache(config = {'CACHE_TYPE':'simple'})
 cache.init_app(server)
 
-# In[]:
-############################ Set up initial Signal #################################################
-import warnings
-import io
-warnings.filterwarnings("ignore") 
-os.chdir("c:\\users\\trwi0358\\github\\pasture-rangeland-forage") # Change to github?
-source = xr.open_rasterio("d:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif") # Change to github
-#source = xr.open_rasterio("https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/rma/prfgrid.tif")
-source_signal = '["noaa", 2018, [2000, 2017], 0.7, "indemnities"]'
-grid = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)[0]
-#grid = readRaster('https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/rma/prfgrid.tif',1,-9999)[0]
-datatable = pd.read_csv("C:\\Users\\trwi0358\\Github\\Pasture-Rangeland-Forage\\data\\PRFIndex_specs.csv").to_dict('RECORDS')
-
-#datatable = pd.read_csv("https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/PRFIndex_specs.csv").to_dict('RECORDS')
-productivity = 1
 
 
 # In[]: 
@@ -261,7 +263,6 @@ app.layout = html.Div(
         # Title and Image
                 html.Img(
                     src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/earthlab.png?raw=true",
-#                    src="https://s3-us-west-1.amazonaws.com/plotly-tutorials/logo/new-branding/dash-logo-by-plotly-stripe.png",
                     className='one columns',
                     style={
                         'height': '75',
@@ -513,7 +514,7 @@ app.layout = html.Div(
 ############################################################################### 
 @cache.memoize()
 # Next step, create a numpy storage unit to store previously loaded arrays
-def global_store(signal):
+def global_store(signal):    
     # Unjson the signal (Back to original datatypes)
     signal = json.loads(signal)
 
@@ -549,17 +550,17 @@ def global_store(signal):
         df = arrays
     else:
         # Average Map
-        averagepath = ("D:\\data\\prfpayouts\\onlinedata\\AY"
+        averagepath = ("e:\\data\\prfpayouts\\onlinedata\\AY"
                    + str(actuarialyear) + "\\"+str(int(strike*100)) + "\\"+str(returntype)
                    +"\\"+rasterpath+"\\array.npz")
         
         # Time-series path
-        timeseriespath = ("D:\\data\\prfpayouts\\onlinedata\\AY"
+        timeseriespath = ("e:\\data\\prfpayouts\\onlinedata\\AY"
                    + str(actuarialyear) + "\\"+str(int(strike*100)) + "\\"+str(returntype)
                    +"\\"+rasterpath+"\\arrays.npz")
         
         # Dates and Index name Path
-        datepath = ("D:\\data\\prfpayouts\\onlinedata\\AY"
+        datepath = ("e:\\data\\prfpayouts\\onlinedata\\AY"
                    + str(actuarialyear) + "\\"+str(int(strike*100)) + "\\"+str(returntype)
                    +"\\"+rasterpath+"\\dates.csv")
         
@@ -616,7 +617,7 @@ def update_year_text(year_slider):
 def toggleDescription(click):
     if not click:
         click = 0
-    if click%2 == 0:
+    if click%2 == 1:
         description = description_text
     else:
         description = ""
@@ -712,6 +713,10 @@ def makeMap(signal):
     This will be the map itself, it is not just for changing maps.
         In order to map over mapbox we are creating a scattermapbox object.
     """  
+    # Clear memory space -- ??
+    print(gc.garbage) # https://rushter.com/blog/python-garbage-collector/
+    gc.collect()
+    
     # Get data
     df = retrieve_data(signal)
     
@@ -923,11 +928,19 @@ def makeTrendBar(clickData,signal):
             y=averages    
         ),
     ]
+    if 'nets' in return_type:
+        signal[4] = 'premiums'
+        signal2 = json.dumps(signal)
+        df2 = retrieve_data(signal2)
+        arrays = [a[1] for a in df2]
+        ylow = -np.nanmax(arrays)
+    else:
+        ylow = 0
     if max(averages) < 15000:
         yaxis = dict(
                 title = trenddict.get(return_type),
                 autorange=False,
-                range=[0, 15000],
+                range=[ylow, 15000],
                 type='linear'
                 )
         annotation = dict(
@@ -1071,12 +1084,20 @@ def makeSeries(clickData,signal):
 #        ),
     ]
             
-    
+    if 'nets' in return_type:
+        signal[4] = 'premiums'
+        signal2 = json.dumps(signal)
+        df2 = retrieve_data(signal2)
+        arrays = [a[1] for a in df2]
+        ylow = -np.nanmax(arrays)
+    else:
+        ylow = 0
+        
     if max(values) < 45000:
         yaxis = dict(
                 title = seriesdict.get(return_type),
                 autorange=False,
-                range=[0, 45000],
+                range=[ylow, 45000],
                 type='linear'
                 )
         annotation = dict(

@@ -30,21 +30,21 @@ Things to do:
 # In[]:
 # Import required libraries
 ############################ Get Functions ####################################
-runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py', 
-        wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage')
+runfile('C:/Users/user/Github/Pasture-Rangeland-Forage/functions_git.py', 
+        wdir='C:/Users/user/Github/Pasture-Rangeland-Forage')
 
 ############################ Get Payout Rasters ###############################
 import warnings
 warnings.filterwarnings("ignore") 
-os.chdir("c:\\users\\trwi0358\\github\\pasture-rangeland-forage")
-source = xr.open_rasterio("d:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif")
-source_signal = '["D:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\\\\", 4, 0.7,100]'
+os.chdir("c:\\users\\user\\github\\pasture-rangeland-forage")
+source = xr.open_rasterio("e:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif")
+source_signal = '["E:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\\\\", 4, 0.7,100]'
 grid = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)[0]
 strike = .7
-mask = readRaster('D:\\data\\droughtindices\\masks\\nad83\\mask4.tif',1,-9999)[0]
+mask = readRaster('E:\\data\\droughtindices\\masks\\nad83\\mask4.tif',1,-9999)[0]
 # Load pre-conditioned bi-monthly USDM modal category rasters into numpy arrays
 #usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmeans\\",-9999)[0]
-usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmodes\\",-9999)[0]
+usdmodes = readRasters("E:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmodes\\",-9999)[0]
 statefps = pd.read_csv("data\\statefps.csv")
 states = readRaster("data\\usacontiguous.tif",1,-9999)[0] 
 
@@ -67,7 +67,7 @@ cache.init_app(server)
 ############################ Create Lists and Dictionaries ####################
 ###############################################################################
 # Index Paths
-indices = [{'label':'Rainfall Index','value':'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\'},
+indices = [{'label':'Rainfall Index','value':'E:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\'}
 #           {'label':'PDSI','value':'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'},
 #           {'label':'PDSI-Self Calibrated','value':'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\'},
 #           {'label':'Palmer Z Index','value':'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\'},
@@ -86,10 +86,10 @@ indices = [{'label':'Rainfall Index','value':'D:\\data\\droughtindices\\noaa\\na
            ]
 
 # Index names, using the paths we already have. These are for titles.
-indexnames = {'D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'Rainfall Index',
+indexnames = {'E:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'Rainfall Index',
             'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\': 'Palmer Drought Severity Index',
-          'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\': 'Self-Calibrated Palmer Drought Severity Index',
-          'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\': 'Palmer Z Index',
+            'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\': 'Self-Calibrated Palmer Drought Severity Index',
+            'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\': 'Palmer Z Index',
           'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\':'Evaporative Demand Drought Index - 1 month',
           'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\':'Evaporative Demand Drought Index - 2 month',
           'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\':'Evaporative Demand Drought Index - 3 month',
@@ -203,7 +203,7 @@ app.layout = html.Div(
         html.Div(# One
             [
                 html.H1(
-                    'PRF - US Drought Monitor Basis Check',
+                    'Pasture, Rangeland, and Forage Insurance and the US Drought Monitor: Risk of Non-Payment During Drought',
                     className='eight columns',
                 ),
                 html.Img(
@@ -228,7 +228,7 @@ app.layout = html.Div(
                             id = 'index_choice',
                             options = indices,
                             multi = False,
-                            value = "D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\"#'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\'
+                            value = "E:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\"
                         ),
                         html.P("Filter by State"),
                         dcc.Dropdown(
@@ -459,281 +459,9 @@ def compute_value(click,index_choice,usdm_level,strike_level,state_choice):
 ###############################################################################
 ######################### Graph Builders ######################################
 ###############################################################################
-@app.callback(Output('basis_graph', 'figure'),
-              [Input('signal','children')])
-def basisGraph(signal):
-    """
-    This will be the drought occurrence map, in order to map over mapbox we are
-        creating a scattermapbox object.
-    """     
-    
-    # Get data
-    df = retrieve_data(signal)
-    [basisrisk, droughtchances, hits, rainchance] = df
-
-    # Transform the argument list back to normal 
-#    if not signal:
-#        signal= source_signal
-    signal = json.loads(signal)
-    
-    # Unpack signals
-    index_choice = signal[0]
-    usdm_level = signal[1]
-    strike_level = signal[2]
-    statefilter = signal[3]
-    typeof = str(type(statefilter))
-
-    # Get desired array
-    droughtchances = df[0]#*statemask
-    
-    # Second, convert data back into an array, but in a form xarray recognizes
-    array = np.array([droughtchances],dtype = "float32")
-    
-    # Third, change the source array to this one. Source is defined up top
-    source.data = array
-    
-    # Fourth, bin the values into lat, long points for the dataframe
-    dfs = xr.DataArray(source, name = "data")
-    pdf = dfs.to_dataframe()
-    step = .25
-    to_bin = lambda x: np.floor(x / step) * step
-    pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
-    pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
-    pdf['gridx']= pdf['lonbin'].map(londict)  
-    pdf['gridy']= pdf['latbin'].map(latdict)  
-    grid2 = np.copy(grid)
-    grid2[np.isnan(grid2)] = 0
-    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
-    pdf['grid'] = pdf['grid'].apply(int)
-    pdf['grid'] = pdf['grid'].apply(str)
-    pdf['printdata1'] = "Grid ID#: "
-    pdf['printdata'] =  "<br>    Data: "
-    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(np.round,decimals = 4).apply(str)
-    groups = pdf.groupby(("latbin", "lonbin"))
-    df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
-    df= df_flat[np.isfinite(df_flat['data'])]
-    
-    # Add Grid IDs
-    colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
-                    [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
-                    [0.7, 'rgb(249, 210, 41)'], [1.0, 'rgb(255, 249, 0)']] # Make darker
-    
-# Create the scattermapbox object
-    data = [ 
-        dict(
-        type = 'scattermapbox',
-#        locationmode = 'USA-states',
-        lon = df['lonbin'],
-        lat = df['latbin'],
-        text = df['grid2'],
-        mode = 'markers',
-        marker = dict(
-            colorscale = colorscale,
-            cmin = 0,
-            color = df['data'],
-            cmax = df['data'].max(),
-            opacity=0.85,
-            colorbar=dict(  
-                title= "BR",
-                textposition = "auto",
-                orientation = "h"
-                )
-            )
-        )]
-    
-    # Return order to help with average value: 
-    average = str(round(np.nanmean(basisrisk),4))
-    layout['title'] = ("%"+str(int(strike_level*100))
-                        +" Rainfall Index | Risk Ratio by "
-                        + DMlabels.get(usdm_level) +"+ USDM Severity<br> Average: "
-                        + average)
-#    layout['title'] = typeof
-#     Seventh wrap the data and layout into one
-    figure = dict(data=data, layout=layout)
-#    return {'figure':figure,'info': index_package_all}
-    return figure
-
-
-
-
-@app.callback(Output('drought_graph', 'figure'),
-              [Input('signal','children')])
-def droughtGraph(signal):
-    """
-    This will be the drought occurrence map, in order to map over mapbox we are
-        creating a scattermapbox object.
-    """     
-    
-    # Get data
-    df = retrieve_data(signal)
-    
-    # Transform the argument list back to normal    
-    signal = json.loads(signal)
-    
-    # Unpack signals
-    index_choice = signal[0]
-    usdm_level = signal[1]
-    strike_level = signal[2]
-    
-    
-    # Get desired array
-    droughtchances = df[1]
-    
-    # Second, convert data back into an array, but in a from xarray recognizes
-    array = np.array([droughtchances],dtype = "float32")
-    
-    # Third, change the source array to this one. Source is defined up top
-    source.data = array
-    
-    # Fourth, bin the values into lat, long points for the dataframe
-    dfs = xr.DataArray(source, name = "data")
-    pdf = dfs.to_dataframe()
-    step = .25
-    to_bin = lambda x: np.floor(x / step) * step
-    pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
-    pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
-    pdf['gridx']= pdf['lonbin'].map(londict)  
-    pdf['gridy']= pdf['latbin'].map(latdict)  
-    grid2 = np.copy(grid)
-    grid2[np.isnan(grid2)] = 0
-    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
-    pdf['grid'] = pdf['grid'].apply(int)
-    pdf['grid'] = pdf['grid'].apply(str)
-    pdf['printdata1'] = "Grid ID#: "
-    pdf['printdata'] =  "<br>    Data: "
-    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(str)
-    groups = pdf.groupby(("latbin", "lonbin"))
-    df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
-    df= df_flat[np.isfinite(df_flat['data'])]
-    
-    # Add Grid IDs
-    colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
-                    [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
-                    [0.7, 'rgb(249, 210, 41)'], [1.0, 'rgb(255, 249, 0)']] # Make darker
-    
-# Create the scattermapbox object
-    data = [ 
-        dict(
-        type = 'scattermapbox',
-#        locationmode = 'USA-states',
-        lon = df['lonbin'],
-        lat = df['latbin'],
-        text = df['grid2'],
-        mode = 'markers',
-        marker = dict(
-            colorscale = colorscale,
-            cmin = 0,
-            color = df['data'],
-            cmax = df['data'].max(),
-            opacity=0.85,
-            colorbar=dict(  
-                title= "Frequency",
-                textposition = "auto",
-                orientation = "h"
-                )
-            )
-        )]
-            
-    layout['title'] = "USDM | Category " + DMlabels.get(usdm_level) +"+ Frequency"
-    layout['mapbox']['zoom'] = 2 
-    
-    # Seventh wrap the data and layout into one
-    figure = dict(data=data, layout=layout)
-#    return {'figure':figure,'info': index_package_all}
-    return figure
-
-
-
-# In[]:
-@app.callback(Output('hit_graph', 'figure'),
-              [Input('signal','children')])
-def droughtGraph(signal):
-    """
-    This will be the drought occurrence map, in order to map over mapbox we are
-        creating a scattermapbox object.
-    """     
-    
-    # Get data
-    df = retrieve_data(signal)
-    
-    # Transform the argument list back to normal    
-    signal = json.loads(signal)
-    
-    # Unpack signals
-    index_choice = signal[0]
-    usdm_level = signal[1]
-    strike_level = signal[2]
-    
-    
-    # Get desired array
-    droughtchances = df[2]
-    
-    # Second, convert data back into an array, but in a from xarray recognizes
-    array = np.array([droughtchances],dtype = "float32")
-    
-    # Third, change the source array to this one. Source is defined up top
-    source.data = array
-    
-    # Fourth, bin the values into lat, long points for the dataframe
-    dfs = xr.DataArray(source, name = "data")
-    pdf = dfs.to_dataframe()
-    step = .25
-    to_bin = lambda x: np.floor(x / step) * step
-    pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
-    pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
-    pdf['gridx']= pdf['lonbin'].map(londict)  
-    pdf['gridy']= pdf['latbin'].map(latdict)  
-    grid2 = np.copy(grid)
-    grid2[np.isnan(grid2)] = 0
-    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
-    pdf['grid'] = pdf['grid'].apply(int)
-    pdf['grid'] = pdf['grid'].apply(str)
-    pdf['printdata1'] = "Grid ID#: "
-    pdf['printdata'] =  "<br>    Data: "
-    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(str)
-
-    groups = pdf.groupby(("latbin", "lonbin"))
-    df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
-    df= df_flat[np.isfinite(df_flat['data'])]
-    # Add Grid IDs
-    colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
-                    [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
-                    [0.7, 'rgb(249, 210, 41)'], [1.0, 'rgb(255, 249, 0)']] # Make darker
-    
-# Create the scattermapbox object
-    data = [ 
-        dict(
-        type = 'scattermapbox',
-#        locationmode = 'USA-states',
-        lon = df['lonbin'],
-        lat = df['latbin'],
-        text = df['grid2'],
-        mode = 'markers',
-        marker = dict(
-            colorscale = colorscale,
-            cmin = 0,
-            color = df['data'],
-            cmax = df['data'].max(),
-            opacity=0.85,
-            colorbar=dict(  
-                title= "Frequency",
-                textposition = "auto",
-                orientation = "h"
-                )
-            )
-        )]
-            
-    layout['title'] = "%"+str(int(strike_level*100)) +" Rainfall Index Would Not Pay | USDM Indicated " +  DMlabels.get(usdm_level) + "+ Drought"
-    layout['mapbox']['zoom'] = 2
-    # Seventh wrap the data and layout into one
-    figure = dict(data=data, layout=layout)
-#    return {'figure':figure,'info': index_package_all}
-    return figure
-
-# In[]:
 @app.callback(Output('rain_graph', 'figure'),
               [Input('signal','children')])
-def droughtGraph(signal):
+def rainGraph(signal):
     """
     This will be a map of PRF Payout frequencies at the chosen strike level
     """     
@@ -822,6 +550,280 @@ def droughtGraph(signal):
     figure = dict(data=data, layout=layout)
 #    return {'figure':figure,'info': index_package_all}
     return figure
+
+# In[]:
+@app.callback(Output('drought_graph', 'figure'),
+              [Input('signal','children')])
+def droughtGraph(signal):
+    """
+    This will be the drought occurrence map, in order to map over mapbox we are
+        creating a scattermapbox object.
+    """     
+    
+    # Get data
+    df = retrieve_data(signal)
+    
+    # Transform the argument list back to normal    
+    signal = json.loads(signal)
+    
+    # Unpack signals
+    index_choice = signal[0]
+    usdm_level = signal[1]
+    strike_level = signal[2]
+    
+    
+    # Get desired array
+    droughtchances = df[1]
+    
+    # Second, convert data back into an array, but in a from xarray recognizes
+    array = np.array([droughtchances],dtype = "float32")
+    
+    # Third, change the source array to this one. Source is defined up top
+    source.data = array
+    
+    # Fourth, bin the values into lat, long points for the dataframe
+    dfs = xr.DataArray(source, name = "data")
+    pdf = dfs.to_dataframe()
+    step = .25
+    to_bin = lambda x: np.floor(x / step) * step
+    pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
+    pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
+    pdf['gridx']= pdf['lonbin'].map(londict)  
+    pdf['gridy']= pdf['latbin'].map(latdict)  
+    grid2 = np.copy(grid)
+    grid2[np.isnan(grid2)] = 0
+    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
+    pdf['grid'] = pdf['grid'].apply(int)
+    pdf['grid'] = pdf['grid'].apply(str)
+    pdf['printdata1'] = "Grid ID#: "
+    pdf['printdata'] =  "<br>    Data: "
+    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(str)
+    groups = pdf.groupby(("latbin", "lonbin"))
+    df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
+    df= df_flat[np.isfinite(df_flat['data'])]
+    
+    # Add Grid IDs
+    colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
+                    [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
+                    [0.7, 'rgb(249, 210, 41)'], [1.0, 'rgb(255, 249, 0)']] # Make darker
+    
+# Create the scattermapbox object
+    data = [ 
+        dict(
+        type = 'scattermapbox',
+#        locationmode = 'USA-states',
+        lon = df['lonbin'],
+        lat = df['latbin'],
+        text = df['grid2'],
+        mode = 'markers',
+        marker = dict(
+            colorscale = colorscale,
+            cmin = 0,
+            color = df['data'],
+            cmax = df['data'].max(),
+            opacity=0.85,
+            colorbar=dict(  
+                title= "Frequency",
+                textposition = "auto",
+                orientation = "h"
+                )
+            )
+        )]
+            
+    layout['title'] = "USDM | " + DMlabels.get(usdm_level) +"+ Drought Frequency"
+    layout['mapbox']['zoom'] = 2 
+    
+    # Seventh wrap the data and layout into one
+    figure = dict(data=data, layout=layout)
+#    return {'figure':figure,'info': index_package_all}
+    return figure
+
+
+
+# In[]:
+@app.callback(Output('hit_graph', 'figure'),
+              [Input('signal','children')])
+def droughtGraph(signal):
+    """
+    This the non-payment count map.
+    """     
+    
+    # Get data
+    df = retrieve_data(signal)
+    
+    # Transform the argument list back to normal    
+    signal = json.loads(signal)
+    
+    # Unpack signals
+    index_choice = signal[0]
+    usdm_level = signal[1]
+    strike_level = signal[2]
+    
+    
+    # Get desired array
+    droughtchances = df[2]
+    
+    # Second, convert data back into an array, but in a from xarray recognizes
+    array = np.array([droughtchances],dtype = "float32")
+    
+    # Third, change the source array to this one. Source is defined up top
+    source.data = array
+    
+    # Fourth, bin the values into lat, long points for the dataframe
+    dfs = xr.DataArray(source, name = "data")
+    pdf = dfs.to_dataframe()
+    step = .25
+    to_bin = lambda x: np.floor(x / step) * step
+    pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
+    pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
+    pdf['gridx']= pdf['lonbin'].map(londict)  
+    pdf['gridy']= pdf['latbin'].map(latdict)  
+    grid2 = np.copy(grid)
+    grid2[np.isnan(grid2)] = 0
+    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
+    pdf['grid'] = pdf['grid'].apply(int)
+    pdf['grid'] = pdf['grid'].apply(str)
+    pdf['printdata1'] = "Grid ID#: "
+    pdf['printdata'] =  "<br>    Data: "
+    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(str)
+
+    groups = pdf.groupby(("latbin", "lonbin"))
+    df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
+    df= df_flat[np.isfinite(df_flat['data'])]
+    # Add Grid IDs
+    colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
+                    [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
+                    [0.7, 'rgb(249, 210, 41)'], [1.0, 'rgb(255, 249, 0)']] # Make darker
+    
+# Create the scattermapbox object
+    data = [ 
+        dict(
+        type = 'scattermapbox',
+#        locationmode = 'USA-states',
+        lon = df['lonbin'],
+        lat = df['latbin'],
+        text = df['grid2'],
+        mode = 'markers',
+        marker = dict(
+            colorscale = colorscale,
+            cmin = 0,
+            color = df['data'],
+            cmax = df['data'].max(),
+            opacity=0.85,
+            colorbar=dict(  
+                title= "Frequency",
+                textposition = "auto",
+                orientation = "h"
+                )
+            )
+        )]
+            
+    layout['title'] = ("Non-Payment Count<br>%"+str(int(strike_level*100)) +" Rainfall Index Would Not Have Payed during "
+          + DMlabels.get(usdm_level) + "+ Drought" )
+
+    layout['mapbox']['zoom'] = 2
+    # Seventh wrap the data and layout into one
+    figure = dict(data=data, layout=layout)
+#    return {'figure':figure,'info': index_package_all}
+    return figure
+
+# In[]:
+@app.callback(Output('basis_graph', 'figure'),
+              [Input('signal','children')])
+def basisGraph(signal):
+    """
+    This is the risk ratio map.
+    """     
+    
+    # Get data
+    df = retrieve_data(signal)
+    [basisrisk, droughtchances, hits, rainchance] = df
+
+    # Transform the argument list back to normal 
+#    if not signal:
+#        signal= source_signal
+    signal = json.loads(signal)
+    
+    # Unpack signals
+    index_choice = signal[0]
+    usdm_level = signal[1]
+    strike_level = signal[2]
+    statefilter = signal[3]
+    typeof = str(type(statefilter))
+
+    # Get desired array
+    droughtchances = df[0]#*statemask
+    
+    # Second, convert data back into an array, but in a form xarray recognizes
+    array = np.array([droughtchances],dtype = "float32")
+    
+    # Third, change the source array to this one. Source is defined up top
+    source.data = array
+    
+    # Fourth, bin the values into lat, long points for the dataframe
+    dfs = xr.DataArray(source, name = "data")
+    pdf = dfs.to_dataframe()
+    step = .25
+    to_bin = lambda x: np.floor(x / step) * step
+    pdf["latbin"] = pdf.index.get_level_values('y').map(to_bin)
+    pdf["lonbin"] = pdf.index.get_level_values('x').map(to_bin)
+    pdf['gridx']= pdf['lonbin'].map(londict)  
+    pdf['gridy']= pdf['latbin'].map(latdict)  
+    grid2 = np.copy(grid)
+    grid2[np.isnan(grid2)] = 0
+    pdf['grid'] = grid2[pdf['gridy'],pdf['gridx']]
+    pdf['grid'] = pdf['grid'].apply(int)
+    pdf['grid'] = pdf['grid'].apply(str)
+    pdf['printdata1'] = "Grid ID#: "
+    pdf['printdata'] =  "<br>    Data: "
+    pdf['grid2'] = pdf['printdata1'] +  pdf['grid'] +pdf['printdata'] + pdf['data'].apply(np.round,decimals = 4).apply(str)
+    groups = pdf.groupby(("latbin", "lonbin"))
+    df_flat = pdf.drop_duplicates(subset=['latbin', 'lonbin'])
+    df= df_flat[np.isfinite(df_flat['data'])]
+    
+    # Add Grid IDs
+    colorscale = [[0, 'rgb(2, 0, 68)'], [0.35, 'rgb(17, 123, 215)'],# Make darker (pretty sure this one)
+                    [0.45, 'rgb(37, 180, 167)'], [0.55, 'rgb(134, 191, 118)'],
+                    [0.7, 'rgb(249, 210, 41)'], [1.0, 'rgb(255, 249, 0)']] # Make darker
+    
+# Create the scattermapbox object
+    data = [ 
+        dict(
+        type = 'scattermapbox',
+#        locationmode = 'USA-states',
+        lon = df['lonbin'],
+        lat = df['latbin'],
+        text = df['grid2'],
+        mode = 'markers',
+        marker = dict(
+            colorscale = colorscale,
+            cmin = 0,
+            color = df['data'],
+            cmax = df['data'].max(),
+            opacity=0.85,
+            colorbar=dict(  
+                title= "BR",
+                textposition = "auto",
+                orientation = "h"
+                )
+            )
+        )]
+    
+    # Return order to help with average value: 
+    average = str(round(np.nanmean(basisrisk),4))
+    layout['title'] =     ("Non-Payment Likelihood <br>" 
+          + "Rainfall Index at %"+str(int(strike_level*100)) 
+          + " strike level and " + DMlabels.get(usdm_level) +"+ USDM Severity | Average: " + average)
+    
+    
+    
+    
+#    layout['title'] = typeof
+#     Seventh wrap the data and layout into one
+    figure = dict(data=data, layout=layout)
+#    return {'figure':figure,'info': index_package_all}
+    return figure
+
 
 # In[]:
 # Main

@@ -10,9 +10,9 @@ import datetime
 from datetime import timedelta
 from itertools import chain
 import matplotlib
-import matplotlib.pyplot as plt, mpld3
-import matplotlib.image as mpimg
-import matplotlib.gridspec as gridspec
+#import matplotlib.pyplot as plt, mpld3
+#import matplotlib.image as mpimg
+#import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FuncFormatter
 from matplotlib import style
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -26,7 +26,8 @@ import copy
 import json
 from flask import Flask
 from flask_cors import CORS
-from flask_caching import Cache
+from flask_cache import Cache
+#from flask_caching import Cache
 import dash
 from dash.dependencies import Input, Output, State, Event
 import dash_table_experiments as dt
