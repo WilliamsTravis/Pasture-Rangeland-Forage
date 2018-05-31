@@ -199,13 +199,8 @@ layout = dict(
 # In[]:
 # Create app layout
 app.layout = html.Div(
-    [
-        html.Div(# One
+    [   html.Div(# Pictures
             [
-                html.H1(
-                    'Pasture, Rangeland, and Forage Insurance and the US Drought Monitor: Risk of Non-Payment During Drought',
-                    className='eight columns',
-                ),
                 html.Img(
                     src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/earthlab.png?raw=true",
                     className='one columns',
@@ -216,6 +211,27 @@ app.layout = html.Div(
                         'position': 'relative',
                     },
                 ),
+                html.Img(
+                    src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/wwa_logo2015.jpg",
+                    className='one columns',
+                    style={
+                        'height': '100',
+                        'width': '225',
+                        'float': 'right',
+                        'position': 'relative',
+                    },
+                ),
+                    ],
+                    className = "row",
+            
+            ),
+        html.Div(# One
+            [
+                html.H1(
+                    'Pasture, Rangeland, and Forage Insurance and the US Drought Monitor: Risk of Non-Payment During Drought',
+                    className='eight columns',
+                ),
+
             ],
             className='row'
         ),
