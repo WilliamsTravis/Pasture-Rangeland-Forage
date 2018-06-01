@@ -163,9 +163,8 @@ def basisCheck(usdm,noaa,strike,dm):
 
     # Get cells at or above dm level drought
     drought = np.copy(usdm)
-    drought[drought >= dm] = 6
+    drought[drought >= dm] = 9999
     drought[drought < 6] = 1
-#    drought[drought == 10] = 10
     
     # get cell at or below strike level rain
     rainless = np.copy(noaa)
@@ -175,8 +174,8 @@ def basisCheck(usdm,noaa,strike,dm):
     
     # Now, where are the 1's in drought that aren't in rainless?
     basis = rainless*drought
-    basis[basis < 12] = 0
-    basis[basis == 12] = 1
+    basis[basis < 19998] = 0 # 19998 is where no payouts and drought intersect (9999*2)
+    basis[basis == 19998] = 1
     
     return basis
 

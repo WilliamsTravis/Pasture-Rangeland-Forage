@@ -42,9 +42,13 @@ source_signal = '["E:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\
 grid = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)[0]
 strike = .7
 mask = readRaster('E:\\data\\droughtindices\\masks\\nad83\\mask4.tif',1,-9999)[0]
+
 # Load pre-conditioned bi-monthly USDM modal category rasters into numpy arrays
-#usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmeans\\",-9999)[0]
 usdmodes = readRasters("E:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmodes\\",-9999)[0]
+
+# Load Rainfall Index
+#indexlist, geom, proj = readRasters2("E:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\",-9999)
+
 statefps = pd.read_csv("data\\statefps.csv")
 states = readRaster("data\\usacontiguous.tif",1,-9999)[0] 
 
@@ -90,18 +94,18 @@ indexnames = {'E:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\': 'Rainfall 
             'D:\\data\\droughtindices\\palmer\\pdsi\\nad83\\': 'Palmer Drought Severity Index',
             'D:\\data\\droughtindices\\palmer\\pdsisc\\nad83\\': 'Self-Calibrated Palmer Drought Severity Index',
             'D:\\data\\droughtindices\\palmer\\pdsiz\\nad83\\': 'Palmer Z Index',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\':'Evaporative Demand Drought Index - 1 month',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\':'Evaporative Demand Drought Index - 2 month',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\':'Evaporative Demand Drought Index - 3 month',
-          'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\':'Evaporative Demand Drought Index - 6 month',
-          'D:\\data\\droughtindices\\spi\\nad83\\1month\\':'Standardized Precipitation Index - 1 month',
-          'D:\\data\\droughtindices\\spi\\nad83\\2month\\':'Standardized Precipitation Index - 2 month',
-          'D:\\data\\droughtindices\\spi\\nad83\\3month\\':'Standardized Precipitation Index - 3 month',
-          'D:\\data\\droughtindices\\spi\\nad83\\6month\\':'Standardized Precipitation Index - 6 month',
-          'D:\\data\\droughtindices\\spei\\nad83\\1month\\': 'Standardized Precipitation-Evapotranspiration Index - 1 month', 
-          'D:\\data\\droughtindices\\spei\\nad83\\2month\\': 'Standardized Precipitation-Evapotranspiration Index - 2 month', 
-          'D:\\data\\droughtindices\\spei\\nad83\\3month\\': 'Standardized Precipitation-Evapotranspiration Index - 3 month', 
-          'D:\\data\\droughtindices\\spei\\nad83\\6month\\': 'Standardized Precipitation-Evapotranspiration Index - 6 month'}
+            'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\1month\\':'Evaporative Demand Drought Index - 1 month',
+            'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\2month\\':'Evaporative Demand Drought Index - 2 month',
+            'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\3month\\':'Evaporative Demand Drought Index - 3 month',
+            'D:\\data\\droughtindices\\eddi\\nad83\\monthly\\6month\\':'Evaporative Demand Drought Index - 6 month',
+            'D:\\data\\droughtindices\\spi\\nad83\\1month\\':'Standardized Precipitation Index - 1 month',
+            'D:\\data\\droughtindices\\spi\\nad83\\2month\\':'Standardized Precipitation Index - 2 month',
+            'D:\\data\\droughtindices\\spi\\nad83\\3month\\':'Standardized Precipitation Index - 3 month',
+            'D:\\data\\droughtindices\\spi\\nad83\\6month\\':'Standardized Precipitation Index - 6 month',
+            'D:\\data\\droughtindices\\spei\\nad83\\1month\\': 'Standardized Precipitation-Evapotranspiration Index - 1 month', 
+            'D:\\data\\droughtindices\\spei\\nad83\\2month\\': 'Standardized Precipitation-Evapotranspiration Index - 2 month', 
+            'D:\\data\\droughtindices\\spei\\nad83\\3month\\': 'Standardized Precipitation-Evapotranspiration Index - 3 month', 
+            'D:\\data\\droughtindices\\spei\\nad83\\6month\\': 'Standardized Precipitation-Evapotranspiration Index - 6 month'}
 
 # State options
 statefps = statefps.sort_values('state')
@@ -115,12 +119,12 @@ datatable = pd.read_csv("data\\state_risks.csv",index_col=0)
 datatable = datatable.dropna()
 datatable = datatable[datatable.state != 'District of Columbia'].to_dict('RECORDS')
 #datatable = datatable.replace(np.nan,"NAN")
-columnkey = [{'label':'Strike:                  Rainfall Index Strike Level','value': 1},
+columnkey = [{'label':'Strike Level:            Rainfall Index Strike Level','value': 1},
              {'label':'DM Category:             Drought Monitor Drought Severity Category','value': 2},
              {'label':'Missed (sum):            Total Number of times the rainfall index would not have paid given the chosen US Drought Monitor Severity Category','value': 3},
              {'label':'Missed (ratio):          Ratio between the number of times the USDM reached the chosen drought category and the numbers of time rainfall index would not have paid','value': 4},
-             {'label':'Rainfall Strikes:        Number of times the rainfall index fell below the strike level','value': 5},
-             {'label':'DM Category Events:      Number of times the USDM reached the chosen category','value': 6}]
+             {'label':'Strike Events:           Number of times the rainfall index fell below the strike level','value': 5},
+             {'label':'DM  Events:              Number of times the USDM reached the chosen category','value': 6}]
 
 #datatable  = datatable.drop(columns = 'Index')
 #
@@ -162,8 +166,8 @@ latdict2  = {y:x for x,y in latdict.items()} # This is backwards to link simplif
 # Descriptions 
 raininfo = "The number of times the rainfall index fell below the chosen strike level."
 dminfo = "The number of times the Drought Monitor reached the chosen drought severity category."
-countinfo = ("The number of times the Drought Monitor reached or exceeded the chosen drought severity category and the rainfall index did not fall below the chosen strike level.")
-ratioinfo = ("The ratio between the number of times the rainfall index at the chosen strike level would not have paid during a drought according to the chosen drought severity category and the number of times that category category was met or exceeded.")
+countinfo = "The number of times the Drought Monitor reached or exceeded the chosen drought severity category and the rainfall index did not fall below the chosen strike level."
+ratioinfo = "The ratio between the number of times the rainfall index at the chosen strike level would not have paid during a drought according to the chosen drought severity category and the number of times that category category was met or exceeded. Only locations with 10 or more drought events are included."
 
 # Create global chart template
 mapbox_access_token = 'pk.eyJ1IjoidHJhdmlzc2l1cyIsImEiOiJjamZiaHh4b28waXNkMnptaWlwcHZvdzdoIn0.9pxpgXxyyhM6qEF_dcyjIQ'
@@ -195,6 +199,7 @@ layout = dict(
         zoom=3,
     )
 )
+        
 
 # In[]:
 # Create app layout
@@ -212,11 +217,11 @@ app.layout = html.Div(
                     },
                 ),
                 html.Img(
-                    src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/wwa_logo2015.jpg",
+                    src = "https://github.com/WilliamsTravis/Pasture-Rangeland-Forage/blob/master/data/wwa_logo2015.png?raw=true",
                     className='one columns',
                     style={
                         'height': '100',
-                        'width': '225',
+                        'width': '300',
                         'float': 'right',
                         'position': 'relative',
                     },
@@ -265,7 +270,7 @@ app.layout = html.Div(
                         dcc.RadioItems(
                             id='strike_level',
                             options=strikes,
-                            value=.75,
+                            value=.85,
                            
                             labelStyle={'display': 'inline-block'}
                         ),                        
@@ -273,7 +278,7 @@ app.layout = html.Div(
                         dcc.RadioItems(
                             id='usdm_level',
                             options=DMs,
-                            value=4,
+                            value=1,
                             labelStyle={'display': 'inline-block'}
                         ),
                     ],
@@ -391,7 +396,8 @@ def global_store(signal):
         statefilter = statefilter2
         
    
-#    # Get the index to compare to usdm
+#    # Get the index to compare to usdm - this will be unique to the drought index later
+#    if not indexlist:
     indexlist, geom, proj = readRasters2(index_choice,-9999)
 #    
     # Now, to check both against each other, but first, match times
@@ -410,7 +416,6 @@ def global_store(signal):
 
     # Create a list of monthly arrays with 1's for droughts
     droughts = [droughtCheck(usdm = usdmodes[i],dm = usdm_level) for i in range(len(usdmodes))]
-#    droughtchances[droughtchances == 0] = 1000
     rainbelow = [droughtCheck2(rain = indexlist[i],strike = strike_level) for i in range(len(indexlist))]
 
     # Sum and divide by time steps
@@ -419,6 +424,14 @@ def global_store(signal):
     
     # Final Basis risk according to the USDM and Muneepeerakul et als method
     basisrisk = hits/droughtchances
+    
+    # Possible threshold for inclusion
+    # select only those cells with 10 or more dm events
+    threshold = np.copy(droughtchances)
+    threshold[threshold<10] = np.nan 
+    threshold = threshold*0+1
+    
+    basisrisk = basisrisk * threshold
     
 #     Filter if a state or states were selected
     if str(type(statefilter)) + str(statefilter) == "<class 'list'>[100]":
@@ -659,7 +672,7 @@ def droughtGraph(signal):
 # In[]:
 @app.callback(Output('hit_graph', 'figure'),
               [Input('signal','children')])
-def droughtGraph(signal):
+def riskcountGraph(signal):
     """
     This the non-payment count map.
     """     
@@ -677,10 +690,10 @@ def droughtGraph(signal):
     
     
     # Get desired array
-    droughtchances = df[2]
+    [basisrisk, droughtchances, hits, rainchance] = df
     
     # Second, convert data back into an array, but in a from xarray recognizes
-    array = np.array([droughtchances],dtype = "float32")
+    array = np.array([hits],dtype = "float32")
     
     # Third, change the source array to this one. Source is defined up top
     source.data = array
@@ -767,11 +780,8 @@ def basisGraph(signal):
     statefilter = signal[3]
     typeof = str(type(statefilter))
 
-    # Get desired array
-    droughtchances = df[0]#*statemask
-    
     # Second, convert data back into an array, but in a form xarray recognizes
-    array = np.array([droughtchances],dtype = "float32")
+    array = np.array([basisrisk],dtype = "float32")
     
     # Third, change the source array to this one. Source is defined up top
     source.data = array
@@ -818,7 +828,7 @@ def basisGraph(signal):
             cmax = df['data'].max(),
             opacity=0.85,
             colorbar=dict(  
-                title= "BR",
+                title= "Risk Ratio",
                 textposition = "auto",
                 orientation = "h"
                 )
@@ -826,7 +836,10 @@ def basisGraph(signal):
         )]
     
     # Return order to help with average value: 
-    average = str(round(np.nanmean(basisrisk),4))
+    # Weight by the number of drought events
+    average = str(round(np.nansum(droughtchances*basisrisk)/np.nansum(droughtchances),4))
+#    average = np.nanmean(basisrisk)
+    
     layout['title'] =     ("Non-Payment Likelihood <br>" 
           + "Rainfall Index at %"+str(int(strike_level*100)) 
           + " strike level and " + DMlabels.get(usdm_level) +"+ USDM Severity | Average: " + average)

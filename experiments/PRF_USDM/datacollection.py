@@ -8,22 +8,32 @@ Loop through each state and get our basis risk assessment.
 """
 
 ############################ Get Functions ####################################
-runfile('C:/Users/trwi0358/Github/Pasture-Rangeland-Forage/functions_git.py', 
-        wdir='C:/Users/trwi0358/Github/Pasture-Rangeland-Forage')
+runfile('C:/Users/user/Github/Pasture-Rangeland-Forage/functions_git.py', 
+        wdir='C:/Users/user/Github/Pasture-Rangeland-Forage')
 
 ############################ Get Payout Rasters ###############################
 import warnings
 warnings.filterwarnings("ignore") 
-os.chdir("c:\\users\\trwi0358\\github\\pasture-rangeland-forage")
-source = xr.open_rasterio("d:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif")
-source_signal = '["D:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\\\\", 4, 0.7,100]'
+os.chdir("c:\\users\\user\\github\\pasture-rangeland-forage")
+source = xr.open_rasterio("e:\\data\\droughtindices\\rma\\nad83\\prfgrid.tif")
+source_signal = '["e:\\\\data\\\\droughtindices\\\\noaa\\\\nad83\\\\indexvalues\\\\", 4, 0.7,100]'
 grid,geom,proj = readRaster('data\\rma\\nad83\\prfgrid.tif',1,-9999)
 strike = .7
-mask = readRaster('D:\\data\\droughtindices\\masks\\nad83\\mask4.tif',1,-9999)[0]
+mask = readRaster('e:\\data\\droughtindices\\masks\\nad83\\mask4.tif',1,-9999)[0]
 # Load pre-conditioned bi-monthly USDM modal category rasters into numpy arrays
 #usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmeans\\",-9999)[0]
-usdmodes = readRasters("D:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmodes\\",-9999)[0]
-indexlist = readRasters('D:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\',-9999)[0]
+usdmodes = readRasters("e:\\data\\droughtindices\\usdm\\usdmrasters\\nad83\\usdmodes\\",-9999)[0]
+indexlist = readRasters('e:\\data\\droughtindices\\noaa\\nad83\\indexvalues\\',-9999)[0]
+################################# Save Numoy arrays to compressed files #######
+#udates = [a[0] for a in usdmodes]
+#justdates = [a[-6:] for a in udates]
+#usdmodes = [a[1] for a in usdmodes]
+#indexlist = [a for a in indexlist if a[0][-6:] in justdates]
+#np.savez_compressed("E:\\data\\prf-usdm\\usdm\\usdm_arrays",usdmodes)
+#np.savez_compressed("E:\\data\\prf-usdm\\usdm\\usdm_dates",udates)
+
+
+
 statefps = pd.read_csv("data\\statefps.csv")
 states = readRaster("data\\usacontiguous.tif",1,-9999)[0] 
 statedict = dict(zip(statefps['statefp'],statefps['state']))
@@ -69,7 +79,8 @@ for s in tqdm(statefps['statefp']):
             rainchance = rainchance*statemask
             
             # Get Risk number for each 
-            riskratio = np.nanmean(basisrisk)
+#            riskratio = np.nanmean(basisrisk)
+            riskratio = np.nansum(droughtchances*basisrisk)/np.nansum(droughtchances)
             risksum = np.nansum(hits)
             strike_events = np.nansum(rainchance)
             dm_events = np.nansum(droughtchances)
