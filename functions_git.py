@@ -5,7 +5,8 @@ Created on Sun May 28 21:14:48 2017
 @author: Travis
 """
 
-import os, gdal, time, inspect, shutil, pickle, glob,  linecache, sys
+import os, time, inspect, shutil, pickle, glob,  linecache, sys
+import gdal
 import datetime
 from datetime import timedelta
 from itertools import chain
