@@ -1152,7 +1152,7 @@ def insuranceCalc(index, productivity, strike, acres, allocation, bases, premium
 
     ############## Actuarial rates ########################################
     base = bases[bases[0][-2:] == name[-2:]][1] # This chooses the base value of the appropriate interval # [1] because that is the array index
-    premiumrate = premiums[premiums[0][-5:-3] == strike and premiums[0][-2:] == interval][1] # This chooses the premium rate at the right interval and strike level
+    premiumrate = premiums[premiums[0][-5:-3] == strike and premiums[0][-2:] == name[-2:]][1] # This chooses the premium rate at the right interval and strike level
     
     ############# Protection ##############################################
     # Default Protection amount
@@ -1895,6 +1895,29 @@ def readRasters2(rasterpath,navalue = -9999):
         alist.append([name,array]) # It's confusing but we need some way of holding these dates. 
     end = time.clock() - start       
     return(alist,geometry,arrayref)
+    
+    
+###########################################################################
+###################### Read Arrays from NPZ with date files ###############
+###########################################################################
+def readArrays(path):
+    '''
+    This will only work if the date files are in the same folder as the .np or .npz
+        Otherwise it outputs the same results as the readRaster functions. 
+        No other parameters required. 
+    '''
+    path = 'data\\indices\\noaa_arrays.npz'
+    datepath = path[:-10]+"dates"+path[-4:]
+    with np.load(path) as data:
+        arrays = data.f.arr_0
+        data.close()
+    with np.load(datepath) as data:
+        dates = data.f.arr_0
+        data.close()
+        dates = [str(d) for d in dates]
+    arraylist = [[dates[i],arrays[i]] for i in range(len(arrays))]
+    return(arraylist)
+    
 ###########################################################################
 ############## Little Standardization function for differenct scales ######
 ###########################################################################  
